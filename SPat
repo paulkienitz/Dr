@@ -1,0 +1,5 @@
+.key com/a,pat/a,opt1,opt2,opt3,opt4
+; a new version of S:SPAT using Dr 1.5 instead of List.
+
+Dr -[\+] -{<com> "\p" <opt1> <opt2> <opt3> <opt4>} <pat>
+

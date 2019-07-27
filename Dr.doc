@@ -1,0 +1,535 @@
+
+                                   DR 2.0
+
+What we got here is Yet Another CLI Directory Listing Command, called Dr
+(pronounced "dr", one syllable) because it leaves out .info files.  (Like,
+the missing I in Dir stands for .info ...? never mind.)  It is a very fast
+and full featured program for AmigaDOS 2.04 and up which is arguably superior
+to all of the dozen or so other Amiga directory listers I've seen.  The
+features it offers are:
+
+  + By default, .info files are not mentioned in the output.  Instead, it
+    shows you which files have *.info files associated with them by writing
+    their names in orange (or whatever you have set color 3 to be), unless
+    you use the -M option (for Monochrome).  Any *.info file that is not
+    associated with a regular file or directory is shown normally, e.g.
+    Disk.info.  You can see all *.info files normally with the -I option.
+
+  + It is fully reentrant and reexecutable.  The "pure" bit is set; you can
+    make it resident.  Some previous versions would not pass stringent purity
+    tests; this one does.
+
+  + It is faster than other directory listers, including older versions of
+    Dr.  The speed advantage is biggest when more than one directory is
+    listed.  Note that this version no longer uses the fastscan.library that
+    was included with some older releases, so you can probably delete that.
+
+  + It arranges the output in a variable number of columns, with spacing
+    based on both the length of the longest filenames and the width of the
+    window.  It assumes a width of 77 when output is not going to a CON:
+    window.  By default, it sorts the entries in columns, not in rows; it's
+    easier to find things alphabetically that way (try it out if you don't
+    think so).  The -H option makes it sort in rows.  Directories are listed
+    with slash characters after their names.  By default, directories are
+    listed before files, and inner directory contents before outer when full
+    depth listings are done, but these can be reversed with an output style
+    option that can also adjust several other cosmetic items.
+
+  + Sorting is aware of international alphabets as of Dr 1.6; it will sort
+    "Mädchen" after "madam" but before "madman".
+
+  + It handles AmigaDOS wildcard patterns, like "#?.(c|o)" to list all files
+    with names ending in ".c" or ".o".  Those of you who hate "#?" can use
+    "*" instead, if you activate the AmigaDOS WILDSTAR flag to do this.  The
+    NathanHale program included with Dr (it's tiny, pure, and PD) switches
+    this feature on or off for all regular AmigaDOS programs, as well as Dr.
+    Starting with Dr 2.0, wildcards can be used in all levels of a pathname,
+    for example "sys:work/#?/source/#?.c".
+
+  + It understands file links.  When the -L option is used, it shows what
+    each soft link is linked to, in an extra line after the regular
+    information for that file.  Using the -X option on a soft link tells the
+    pathname that it is linked to, but no other information (this is due to a
+    limitation of AmigaDOS).  In normal output, soft links are grouped with
+    directories but do not have slashes on the ends of their names as
+    directories do.  Hard links do not at present get any special treatment,
+    except that Dr will notice if a directory is linked "inside itself".  Dr
+    will NOT read soft links in RAM:, except for using -X on a single link,
+    because the Ram-Handler will sometimes blow shrapnel around your system
+    when you try that.  (Note: if you list a directory containing a hard
+    link, you will not see any filenote on it, but if you ask for a listing
+    of just that link, perhaps by using the -X option, you may see one.  This
+    is the fault of the filesystem, not Dr.)
+
+  + It has lots of genuinely useful options.  There isn't much one could ask
+    of a directory lister that Dr can't somehow accomplish.
+
+  + And last but certainly not least, Dr is public domain and the source
+    code is included.
+
+USAGE:  type "Dr" followed by zero or more file names, directory names,
+patterns, or options, or type "Dr ?" for a summary of options.  Anything that
+starts with a dash character and is not enclosed in quotes is taken as
+options.  Example:
+
+  dr -orf devs:
+
+In this command, "devs:" is the directory that gets listed, and the set of
+options is "-orf".
+
+By default, Dr lists the names of files and subdirectories in whatever
+directories you tell it to list, alphabetically sorted in columns.  It's
+usually easier to find something alphabetically by reading down columns
+instead of across rows, in my experience.  If you disagree, use the -H option
+(H for "horizontal").  Directory names are listed before file names, with the
+filenames indented one space.  (This method of visibly separating them
+replaces that stupid line of dashes that many users disliked.)  Each
+directory name is followed by a slash.  Only the name itself, not the slash,
+is orange if it has an icon.  Things with associated *.info files will be
+marked as such even if the *.info file itself is excluded by the pattern you
+used, or by the -D or -A or -B options.  If you list just a single file, it
+will check whether it has a *.info file and show the name in the alternate
+color if so, unless you use the -I (show .infos) or -M (monochrome) option.
+It does not check to see whether files with names ending in .info are actual
+valid icon files.  Note that if the output is not a CON: window, it is as if
+-M were used; it doesn't show you which files had icons.
+
+New in release 1.5 is an extension of pattern syntax:  If you end the pattern
+with a double colon, it applies that pattern to files within all of the
+subdirectories it encounters, as well as the directory you specify.  You can
+think of "pattern::" as being equivalent to "pattern" and "#?/pattern" and
+"#?/#?/pattern" and so on.  This is different from using the -R option (show
+contents of subdirectories) with a pattern.  With -R, it shows files in the
+top directory that fit the pattern, and looks in each subdirectory with a
+name that fits the pattern, showing all the files inside.  With "::" it looks
+in all subdirectories and shows the items in them that match the pattern.
+The "::" can be used only at the very end of a path/pattern specification,
+not in the middle.  That is, "#?/source/#?.c::" is legal but something like
+"work#?::/#?.doc" is not.
+
+-R will also search the contents of directories which are not shown, if the
+reason they are not shown is because of the -A, -B, -F, or -P options, rather
+than because of a pattern.  Those options will limit which files are shown
+within those subdirectories.
+
+If you specify an actual directory that has a name with pattern characters in
+it, like maybe a drawer named "Doesn't work?", Dr will list that directory
+instead of expanding the pattern.  You can force it to expand by adding an
+extra percent sign to the pattern, so it doesn't match the name.  Patterns at
+the end of a pathname may be up to 128 characters long.
+
+If you wish to use a single question mark as a pattern to show all files with
+one-character names, and there are no other arguments on the command line,
+you must put quotes around it or add a percent-sign to it, or Dr will think
+you are asking it for a brief summary of usage and options.  As of Dr 1.5,
+the way to specify a quote within quotes is with "" rather than the AmigaDOS
+standard *", in order to make it easier to use the asterisk as a wildcard.
+
+You can give several option letters after one dash, like "Dr -chs foo", or
+separately, like "Dr -c -h foo -s".  The case of the option letters doesn't
+matter.  Each option affects those files and directories that come after it
+on the command line, except that any options at the end, after the last
+filename, act as if they were entered at the beginning.  Example:  "dr foo -s
+bar" lists directory foo without showing sizes, and directory bar with sizes
+shown.  If a directory name begins with a dash, put quotes around so that it
+isn't taken as options.  If you give an option twice, the second one cancels
+the first.  This means that if you make an alias like "alias list dr -lc []",
+saying "list -c" turns the -c option off.  Or, you can show directory foo
+with sizes, and directory arf without sizes, with the command "Dr -s foo -s
+arf".  (Note: since options at the end act like they are at the beginning,
+"Dr -s directory -s" will show the directory without the -s option!)
+
+Options can also be given by setting the environment variable DR-OPTS.  It
+can contain any option or options from the list below, including custom
+format strings.  They are checked before looking at any of the options on the
+command line.  Local shell variables set with "Set" take precedence over
+global ENV: variables set with "SetEnv".  Options on the command line can
+reverse the ones in DR-OPTS.  The command line option -@ makes it ignore the
+DR-OPTS variable.  Hyphens before options are allowed, but not needed, in
+DR-OPTS.  It can be up to 287 characters long.  So for example, if you want
+to make Dr always use the options "-I" and "-P^H" and "-N12" except when you
+tell it otherwise, give these commands:
+
+    setenv DR-OPTS "i p^h n12"
+    copy env:DR-OPTS envarc:
+
+The second command saves the environment variable so it will be automatically
+restored when you reboot or turn on the machine.
+
+The complete set of options for Dr release 2.0 is:
+
+    -I  List .info files like normal files instead of using an alternate
+        color to mark the other files they are associated with.
+
+    -M  Turns off the use of color to mark files that have icons.  Color is
+        not used anyway when output is redirected to a file.
+
+    -S  Show the size of each file in bytes, and totals.  The number of
+        spaces allowed for each number is based on the largest value found in
+        the output, except in unsorted mode (when -O is used) where nine
+        characters are allowed.
+
+    -C  Sort chronologically (newest last) instead of alphabetically.
+
+    -Z  Sort by file size, from smallest to largest.  Items of equal size,
+        such as directories, are sorted alphabetically or chronologically
+        depending on presence of -C.
+    
+    -V  Sort in reverse (Z to A, newest to oldest, or largest to smallest).
+
+    -H  Sort into rows instead of columns, if more than one column.
+
+    -L  Show sizes, protection bits, datestamps and filenotes like the List
+        command.  Overrides -S.  Show total bytes/blocks used.  Unlike List,
+        it puts the filename after the other information instead of before.
+        For soft links it adds an extra line telling what path it is linked
+        to.  Output is sorted unless you also use the -O option.
+
+    -Y  Use day names like "Today" or "Yesterday" or "Monday" to show dates
+        within the last week, the way List does if you don't use its DATES
+        option.  This applies to "\t" substitutions (see below) also.
+
+    -D  Do not show file names, only subdirectory names.  Cancels -F.
+
+    -F  Do not show subdirectory names, only file names.  Cancels -D.
+
+    -K  Show the disk address (header block key) of each file or directory,
+        in square brackets.  As with -S, the spacing allowed for the number
+        is based on the largest value shown, except when output is unsorted
+        (-O).  In that case six spaces are allowed.
+
+    -R  Recursively show contents of all subdirectories found.  If you're
+        going to descend a whole lot of levels (like more than about nine)
+        you will need a bigger stack than the default 4K.  It checks for
+        adequate stack before entering each subdirectory.  An 8K stack would
+        let you go about 40 levels deep.
+
+    -U  Show only disk space consumed, and a count of files and directories,
+        without listing any names unless you also use -O or custom
+        formatting.  As far as output goes, -U overrides all other options
+        except -R, -O, and custom formatting, but patterns and options may
+        affect the totals shown.
+
+    -O  Put each filename on a separate line as a complete pathname, do not
+        sort, do not hide .info files, and when -R is used merge all the
+        directories and subdirectories into a single list.  If -L is also
+        used, size and protection and such is shown, and totals are given at
+        the end, with no subtotals for inner directories.  With -L, names are
+        shown as relative pathnames from the directory specified, including
+        inner dir names if -R is used, not as complete pathnames.  Using -U
+        with -O also causes totals to be shown at the end, but leaves the
+        output in the form of one complete name per line.  If neither -L nor
+        -U is used, there are no headers to separate directories, just
+        nothing but names.  This can be very useful as input to other
+        programs.  Overrides -S, -K, -C, and lack of -I.  -N is overridden in
+        most ways but still affects whether inner directories are listed
+        after outer ones, as opposed to being listed somewhere in the middle.
+        The beginning of the pathname shown is the directory arg as you
+        specified it in the command, not the absolute path, unless you use
+        -T.  The pathnames output have a maximum length of 300 characters.
+        Output is continuous while the disk is being scanned, instead of done
+        afterwards.  Unsorted output can be noticeably faster, because the
+        disk IO is asynchronous.
+
+    -T  Convert the pathnames you give it to absolute form.  For instance, if
+        you say "Dr -o env:" it will normally write lines of filenames like
+        "env:Kickstart".  But "Dr -ot env:" will say "Ram Disk:env/Kickstart"
+        or the like; "env:" is converted into its true pathname.
+
+    -X  Show the specified directory's information as if it were listed as
+	part of its parent directory, instead of showing the files inside.
+	Unless -O or custom formatting is used, show its protection bits,
+	datestamp, and so on as if listed with -L.  If an arg is a soft link
+	instead of a directory, show the pathname that it is linked to; the
+	datestamp and such are not shown in this case due to a limitation of
+	the Amiga filesystem.  Ignored if -R or a pattern at the end of the
+	argument is used.  Overrides -F, -D, and -P.
+
+    -A# (example: -A30)  Show all files dated within the last # days.  The
+        cutoff point is midnight before the day # days ago.  Thus -A0 shows
+        files changed today.  -A not followed by a digit cancels it.
+
+    -B# (example: -B5)  Like -A, but show all files more than # days old.
+        Combining -A with -B uses a range of days, or excludes a range of
+        days if the -A number is smaller (more recent) than the -B number.
+
+    -N# (example: -N2)  Select a general style for how directories and files
+        are arranged in the output.  The default is 0, which specifies that
+        files should be listed immediately after directories, indented one
+        space more than directories.  1 specifies a blank line in between,
+        and no difference in indentation.  2 is like 1 except with a line of
+        dashes in place of the blank line.  3 specifies that files and
+        directories are combined into a single sorted list.  You can add ten
+        to any of those numbers (e.g. -N12), and that tells it that files are
+        to be listed before directories rather than after.  This also causes
+        the contents of inner directories to be listed after, rather than
+        before, their parent directories.  This also causes inner directory
+        listings to appear in properly sorted order, which they cannot do
+        when listed before their parents, and might be a trifle faster.
+        Other values produce a nonfatal error message.
+
+    -P...
+        A bit more complicated than the options above; the letter P may have
+        other letters after it, each one optionally preceded by a tilde (~).
+        The letters allowed are H, S, P, A, R, W, E, or D (lowercase okay).
+        These letters represent protection bits.  If the tilde is in front of
+        a letter, Dr will show only files for which that protection bit is
+        not set.  If there is no tilde it will show only those for which it
+        is set.  For instance, to show all "pure" files, use -PP.  To show
+        all script files which have not been backed up, use -PS~A.  Use -P
+        with a space after it to cancel earlier -P options, making it ignore
+        protection bits.  For the bits R, W, E, and D, "set" means that the
+        bit shows as present when you use List or Dr -L.  (The physical bit
+        is actually a zero in these cases.)  So for example -P~D means show
+        files protected from deletion.  You can use a caret (^) instead of a
+        tilde (~) if you want.  Must not be followed by another option
+        letter; that is, you can't use -PAU for -PA -U.
+
+    -[...format string...]
+        Control the format of the output.  For each file or directory to be
+        listed, the text inside the brackets is written out followed by a
+        newline.  Substitutions can be made in that text, by including a
+        backslash character followed by one other character to indicate what
+        to insert, optionally with digits in between.  The digits are ignored
+        for most substitutions, but when a number (for instance) is inserted,
+        the digits specify how many text columns to use.  For substitutions
+        that produce a decimal number (\s and \k), spaces are added on the
+        left if the number of digits to be written is less than the specified
+        width, and if the number of digits given is insufficient for the
+        number's digits, they're all written out anyway.  The complete list
+        of substitutions is:
+           \n is replaced with a newline.
+           \e is replaced with an escape character.
+           \d is replaced with the name of the directory being searched.
+               (If you specified a file instead of a dir, or used -X, \d will
+               give the full name, and any filename pasted on after it will
+               be invalid.)
+           \f is replaced with the name of the current file or directory
+               being listed, with no path in front.
+           \p is replaced with the pathname of the current file or directory;
+               like \d followed by \f, with a slash in between if needed.
+           \? becomes a slash if the current file is a directory, or a colon
+               if it is a volume (with -X option), or nothing for files.
+               Usually used right after \f or \p to show whether it is a
+               directory.
+           \/ is a slash unless the preceding character output was a slash,
+               colon, double-quote, whitespace, or control character.
+               Possibly useful for joining filenames onto directory names.
+           \b is replaced with the file's protection bits, shown as eight
+               letters or dashes; e.g. "-s-arw-d".
+           \t is replaced with the file's timestamp, in the format
+               "DD-Mmm-YY HH:MM:SS".  (No choice of date format yet.)  If a
+               number is given (for example "\9t"), then if the number is
+               less than 18, the date is truncated on the right after that
+               many characters, and if more than 18, then extra spaces are
+               added on the left to produce the desired number of characters.
+           \w is replaced with the day of the week that the file's datestamp
+               falls on.  As with \t, the name is padded on the left if you
+               give a width greater than 9, and truncated if you give less.
+               This means that "\3w" can be used to produce a three letter
+               abbreviation like "Mon" or "Wed".
+           \s is replaced with the file's size in bytes, or blanks for a
+               directory.  If no width is specified, the default width is 9
+               characters.
+           \k is replaced with the disk address (key) of the file or
+               directory, padded to a constant width.  If no width is
+               specified, the default width is 6 characters.
+           \i is replaced by (n) spaces, where (n) is how many levels deep in
+               recursive descent you are -- no spaces when no recursion.  If
+               a width is included (e.g. "\4i") then the recursion depth is
+               multiplied by that number to give the number of spaces written.
+           \+ prevents the newline at the end of each output.
+           \ before anything else "quotes" it.  Use \\ for \ and \] for ].
+        To cancel a previous format option and use normal output from now on,
+        use -[].  Overrides -S, -L, and -K.  Output is sorted normally, and
+        has the usual headers to separate subdirectories and different
+        directories given on the command line, and (with -N1 or -N2) the
+        usual blank line or line of dashes, unless you use -O also.  Note
+        that whitespace and double-quotes inside -[...] are treated as
+        literal text, not as marking separate arguments to Dr.  The text that
+        is output after substitutions is limited to 255 characters.  The name
+        written by \p or \f will be in the cursor color (orange or whatever)
+        if it has an icon, unless you use -I or -M or -O or redirect the
+        output to a file.
+
+    -{... format string...}
+        Like -[...], except it executes the result as an AmigaDOS command
+        instead of just writing it out.  (Use \} if you need a } in the
+        command.)  This is done in addition to, not instead of, normal
+        output.  So you can use both -[...] and -{...} at once with different
+        formats.  The command is done first, the output last.  In fact,
+        commands are executed during the disk scan instead of saved until
+        afterwards, so they are done in unsorted order.  You can use -o[\+]
+        to suppress all output and just run commands.
+
+These next few options, which are punctuation characters instead of letters,
+differ from the above in that they take global effect if they appear anywhere
+on the command line, and do not toggle.
+
+    -@  Causes Dr to ignore the DR-OPTS environment variable and use the
+        default "factory" option settings.
+
+    -?  Test whether any files asked for can be found.  Produce no output
+        of any kind, but return 5 (WARN) and error 205 (object not found) if
+        nothing is found that matches the arguments given.  Return 0 if
+        anything is found to match any file, dir, or pattern argument.
+        Overrides all options controlling output.  Also overrides -{}, since
+        it stops as soon as it finds even one match.
+
+    -!  Turn off the cursor during output to the screen.  Text gets written
+        somewhat faster this way.
+
+Here is a brief list of mnemonic words that might help you remember which
+option is which:
+
+    -A = After        -B = Before       -C = Chronological  -D = Dirs only
+    -F = Files only   -H = Horizontal   -I = include Icons  -K = Keys
+    -L = List Long    -M = Monochrome   -N = style Number   -O = name Only
+    -P = Protection   -R = Recursive    -S = Size           -T = True name
+    -U = Usage        -V = reVerse      -X = eXternal       -Y = Yesterday
+    -Z = by siZe      -! = zoom!        -? = exists?        -@ = v@nilla
+
+If Dr lists the contents of more than one directory, each one will be
+preceded with its name, written like this:
+
+        ===  path/whatever/dir  ===
+
+unless you use -O (but not -U or custom formatting) in which case the
+different listings will all run together without separation.  If you give no
+directory or pattern, it lists the current directory, of course.  Or you can
+specify the current directory as empty quotes: "".
+
+If you give it a multiply assigned name, it will produce separate sections
+for each directory the name is assigned to, with banners like the one shown
+above for each one.  It can handle up to fifty assignments on one name.  For
+example, assume that you have FONTS: assigned to two directories named
+"Workbench:fonts" and "Work:etc/MoreFonts".  If you give the command "Dr
+fonts:t#?.font" you might get output like this:
+
+        === Workbench:fonts ===
+ topaz.font
+
+        === Work:etc/MoreFonts ===
+ tallibm.font   times.font
+
+Note that if you use -R or a "::" pattern with a multiply assigned name, and one
+of the assignments is a subdirectory of another, you may see some files listed
+twice.  Dr does not watch out for such overlaps, though it will catch cases in
+which a link makes a directory an ancestor of itself.  Also, if you name a
+subdirectory under the assigned name, which is present in more than one of the
+assigned directories, only the first one will be seen.  (Example: if there is
+a "Workbench:fonts/courier/18" and a "Work:etc/MoreFonts/courier/48", then
+listing "FONTS:courier" will only show the first.)  When -X is used, it will
+tell the protection and datestamp of each directory the name is assigned to.
+
+The usage totals given at the end of a -S, -L, or -U output tell the number
+of directories listed, the number of files, the total number of bytes in the
+files, and the number of disk blocks they occupy.  For each of these numbers
+it may give a second number in parentheses.  This represents the total found
+in the whole directory, when it differs from the total of those selected for
+listing.  Things excluded by a pattern or by -A, -B, -D, -F, or lack of -I,
+may contribute to the differences between the numbers.
+
+Some examples of using format strings:  to mark the files in directory foo as
+having been last updated yesterday, use
+
+    Dr -o -{setdate "\p" yesterday} foo
+
+The -o is not necessary but usually a good idea.  Or you might want to use
+-[\+] to suppress output.
+
+To copy all files ending in ".c" in directory foo to directory bar with
+".BAK" stuck on the end (foo/xxxxx.c becomes bar/xxxxx.c.BAK), use
+
+    Dr -o -{Copy "\p" to "bar/\f.BAK"} foo/#?.c
+
+WARNING:  Using Rename in the -{...} command may not work.  With at least
+some versions of some filesystems, such as RAM:, renaming a file and then
+looking up the "next" file in that directory after the one that just got
+moved, may get it very confused.  Better to use -[] to write the Rename
+commands to a temporary file and then Execute that file.  Similar cautions
+apply to Delete.
+
+Some Un#@%!x folks like to list their files by simply going "echo *".  This
+writes out the names of the files packed all onto one line.  Well if you want
+to misuse Dr that way, you can:  (you'll probably want to use an alias)
+
+    Dr -f -[\f \+] foo
+
+That could be shortened to "Dr -f[\f \+] foo" ... with Dr 1.5 and newer,
+you can put letter options after the same dash as [] and {} options, before
+or after the brackets.  Dr will output a newline before it exits.
+
+You can execute more than one command for each file by putting \n in between
+the commands inside -{ }.  Or alternatively, you can split the Dr command
+into multiple lines with a plus sign at the end of all but the last, and the
+newlines will be included in the bracketed command string.  (Plus-newline
+outside of brackets is considered the same as a space.)  But the complete
+text after all substitutions are made must be less than 256 characters long
+or Dr cannot execute it.  If a command comes out too long, Dr will write out
+a warning message and continue, and return 5 ("Warn") when it exits.
+
+As an example of using more than one command separated by newlines, the
+following will type out all the files in directory foo with a header in front
+of each one:
+
+    Dr -[\+] -{echo "*N  #### FILE \p -=>" \n type "\p"} foo
+
+Or, alternatively:
+
+    Dr -[\+]{echo "*N  #### FILE \p -=>" +
+    type "\p"} foo
+
+At present, Dr quits whenever the command's return code is ten or more, but
+continues with nine or less.  Dr 1.5a and earlier quit when any nonzero
+return value occured.  A future version will have some way of setting a
+"Failat" level for such commands.
+
+An example of using the -? option to test whether any files matching your
+criteria exist ... this command tests whether either directory Foo or
+volume Bar: has any files that need backing up, with the assumption that a
+file does not need backing up if the A protection bit is set or if its name
+ends in .o or .bak, and returns 5 if none do ... you can follow this in a
+script with "If WARN" to check whether the return was 5:
+
+    Dr -?fp~a  Foo/~(#?.(o|bak))::  Bar:~(#?.(o|bak))::
+
+
+Some features I might add to future versions, maybe:
+
+    The ability for the \f and \p formatting options to perform string
+    substitution on filenames, so that (for instance) FOO.TXT becomes
+    FOO.DOC.  This would be expressed with a syntax like \:::f or \:::p, for
+    example "\:.txt/:.doc:p".  The slash after ".txt" would indicate that it
+    must be found at the end of the name.  And more ways to split and combine
+    the starting pathname, the subdirectory under that, and the local name.
+
+    -J: go ahead and jump into soft links when using -R.
+
+    -G:  Show file's timestamp as age; days and hh:mm:ss before present.
+
+    An option to control what format to display dates in.
+
+    Make -A and -B able to parse date-and-time, e.g. "-A(5-Nov-93 16:00)".
+
+    -Q:  Super-compact columnation like ls 4.1ljr, maybe.
+
+    Make -X and -R both work at once.
+    
+    Maybe a variation of -T which substitutes the drive name for the volume
+    name.
+
+Dr is in the public domain, written by Paul Kienitz.  Feature suggestions and
+bug reports are appreciated.  I can be reached at:
+
+       snail: Paul Kienitz        bbses: Winners Circle     510-845-4812 
+              6430 San Pablo ave.        ("Paul M Kienitz" on that one)
+              Oakland, CA  94608         La Cantina (FAUG)  415-341-7566
+              USA                        The Mission        415-967-2021
+
+     fidonet: "Paul Kienitz" at 1:125/28
+    internet: paul.kienitz@f28.n125.z1.fidonet.org
+
+If you want the source and didn't get it with the executable, you should be
+able to download it from one of those bbses.
+

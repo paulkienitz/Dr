@@ -1,0 +1,5 @@
+.key com/a,pat/a,dir/a,opt1,opt2,opt3,opt4
+; a new version of S:DPAT using Dr 1.5 instead of List.
+
+Dr -[\+] -{<com> "\p" "<dir>\/\f" <opt1> <opt2> <opt3> <opt4>} <pat>
+

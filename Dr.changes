@@ -1,0 +1,118 @@
+
+This is the revision history of Dr by Paul Kienitz:
+
+              DIFFERENCES BETWEEN RELEASE 2.0 AND RELEASE 1.6 BETA:
+
+Dr now works under AmigaDOS 2.04 and up only.  No more ponderous 1.3 code,
+yippee!  Also, since the Directory Caching File System of DOS 3.0 renders
+fastscan.library obsolete, it is no longer used.  That code which did so
+magnificently under 1.3 is of minimal value under 2.x when not actually a
+hindrance, and is a complete liability with the DCFS.
+
+-Y option added to make it show "Today", "Wednesday", etc instead of date.
+-N option added for setting overall output style.
+
+Format string substitution codes can now include a field length specification
+between the backslash and the letter, as decimal digits.  It is ignored at
+present except for the \s, \k, \i, \t, and \w substitutions.  The \w code,
+which is replaced with the day of the week that the file's datestamp is on,
+is new.
+
+Patterns in the middle of a directory name are now handled, for example
+"sys:#?/foo/#?.c".  Each directory that matches the pattern before the last
+slash gets a header with the real directory name in it, expanded to full
+absolute form if -T is used.
+
+Formerly, the -X option would override -O; now it doesn't.  This is so -O
+behaves in a sensible way with patterns like "#?/readme".
+
+Formerly, if a pattern caused multiple directories to be listed, every subdir
+scanned would get a "===  name  ===" header, even if nothing in it matched
+the pattern.  Now only those with a match get headers.  And now the header
+shows "(current dir)" in place of an empty name.
+
+Change made after 2.0 beta release: square-bracket character sets in patterns
+now work correctly with lowercase letters.
+
+That beta release also had a bug in scanning multi-level patterns: the
+intermediate directories got dangling locks left on them, so they couldn't be
+deleted until after a reboot, and memory was slowly lost.  It also had a
+serious bug in the text output function that could cause memory corruption.
+
+              DIFFERENCES BETWEEN BETA RELEASE 1.6 AND RELEASE 1.5a:
+
+It now handles multiple assigns.  It will search each directory in turn (up
+to 50) that the name is assigned to, putting a banner with the full pathname
+on top of each one.
+
+Sorting of filenames is internationalized -- "año" is sorted between "Anna"
+and "ants".  This slows down sorting of large directories a little bit.
+
+Added -? option to silently test for anything to fit arguments.
+
+Conversion of "*" to "#?" in patterns under 1.x now correctly handles cases
+where one or more apostrophes precede the asterisk.
+
+-{...} under 2.x now uses System() instead of Execute().  The UserShell, if
+any, is used to run the command.  Dr will quit if the command returns 10 or
+higher; an option to adjust this "fail level" is probably needed, but there's
+no tag for the purpose in V37 System().
+
+All text output is now done asynchronously by a background process, so that
+disk scanning can go ahead without waiting for output.  This seems to give
+little improvement under 1.x but can reduce times by 25% or more under 2.x in
+long recursive listings.  I tried to do this before but ran into difficulty
+in reacting promptly to ctrl-C break.  It now responds correctly with all
+console handlers and OS versions I've tried.  It also will never write any
+trailing whitespace before a newline now.
+
+Dr now keeps hands off any soft links found in RAM:, or any other filesystem
+which claims a dostype of 444F5300 in its volume node (I don't think there
+are any others -- they mostly put zero in that slot), because the V37
+Ram-Handler allows you to create soft links but freaks out when you try to
+read their contents.
+
+-T option added to convert the pathnames you specify to absolute form.
+
+It now checks for the variable DR-OPTS (either a shell variable or one in
+ENV:) for default options.  Added option -@ which prevents this.
+
+Removed a lingering Enforcer hit.
+
+Woops -- fixed bug in fastscan.library that made it fail to follow hash
+chains from links, so that every once in a while something just wouldn't show
+in a directory with links in it.  Also made fastscan understand DOS\2 and
+DOS\3 dostype codes for internationalized filesystems.  Also added checks for
+weird filesystem startup values that could have made it blow up.
+
+Got rid of a lingering cosmetic bug wherein passing it "filename/#?" would
+cause an extra error message.  1.5a really should have gotten this.
+
+When writing out N filenames in more than N columns, it no longer scrunches
+the names extra close together in order to allow for one more column which
+isn't used anyway.
+
+              DIFFERENCES BETWEEN RELEASE 1.5a AND RELEASE 1.5:
+
+This is strictly a bugfix; there are no new features.  The bugs fixed relate
+to cases in which the item given in the command line is a file and not a
+directory.  With various combinations of -O, -X, and -{}, it would do things
+like report totals when none were asked for, or execute malformed commands
+where it should have taken no action.
+
+Custom formatting would produce incorrect results for \p if -X was used or
+the arg being shown was a file.  I had to do something cheap:  in these cases
+\p simply puts out just what you typed, without even a change in
+capitalization.  Except that for root directories, it writes the volume name.
+Converting what you typed into an absolute pathname is for another release.
+\d attempts to remove the "tail" to print the parent directory name, but
+can't do so in all cases, such as if you give a path ending in slashes
+indicating parent dir(s).
+
+Used my "purify.a" startup module to make it reentrant, instead of the brute
+force method of keeping everything on the stack.  This made it a bit simpler
+and 400 bytes smaller.  This is NOT the defective purify.a I released before;
+it's release 2.
+
+              (Differences for versions before 1.5 are no longer
+              included in this file.)
