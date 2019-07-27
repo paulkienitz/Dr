@@ -1,0 +1,1065 @@
+<html>
+<head>
+	<title>Dr 2.0 - Amiga directory lister - user manual</title>
+	<style type='text/css'>
+	    BODY          { background-color: #eeeeff; }
+	    HR            { width: 50%; text-align: center; margin: 1.5em auto 1.5em auto; }
+		LI            { margin-top: 0.5em; }
+		CODE          { font-weight: bold; padding: 2px;
+		                background-color: ffffff; white-space: nowrap; }
+		CODE I        { font-weight: normal; font-family: serif;
+                        color: #008000; }
+		.sample       { font-family: monospace; font-weight: bold;
+		                margin-left: 3em; background-color: ffffff; }
+		.options      { margin-left: 3em; }
+		.options TD   { vertical-align: baseline; padding-bottom: 1ex; }
+		.skinny       { width: 1%; white-space: nowrap; padding-right: 3px; }
+	</style>
+</head>
+
+<body>
+
+<h1><center>DR 2.0</center></h1>
+
+<p>
+
+What we got here is Yet Another CLI Directory Listing Command, called Dr
+(pronounced &ldquo;dr&rdquo;, one syllable) because it leaves out .info files.&nbsp; (Like,
+the missing I in Dir stands for .info ...? never mind.)&nbsp; It is a very fast
+and full featured program for AmigaDOS 2.04 and up which is arguably superior
+to all of the dozen or so other Amiga directory listers I&rsquo;ve seen.&nbsp; The
+features it offers are:
+
+</p>
+<ul>
+<li>
+
+    By default, .info files are not mentioned in the output.&nbsp; Instead, it
+	shows you which files have *.info files associated with them by writing
+	their names in orange (or whatever you have set color 3 to be), unless you
+	use the <code>-M</code> option (for Monochrome).&nbsp; Any *.info file that
+	is not associated with a regular file or directory is shown normally, e.g.
+	Disk.info.&nbsp; You can see all *.info files normally with the
+	<code>-I</code> option.
+
+</li>
+<li>
+
+    It is fully reentrant and reexecutable.&nbsp; The &ldquo;pure&rdquo; bit is set; you can
+	make it resident.&nbsp; Some previous versions would not pass stringent
+	purity tests; this one does.
+
+</li>
+<li>
+
+    It is faster than other directory listers, including older versions of
+	Dr.&nbsp; The speed advantage is biggest when more than one directory is
+	listed.&nbsp; Note that this version no longer uses the fastscan.library
+	that was included with some older releases, so you can probably delete that.
+
+</li>
+<li>
+
+    It arranges the output in a variable number of columns, with spacing based
+	on both the length of the longest filenames and the width of the
+	window.&nbsp; It assumes a width of 77 when output is not going to a CON:
+	window.&nbsp; By default, it sorts the entries in columns, not in rows; it&rsquo;s
+	easier to find things alphabetically that way (try it out if you don&rsquo;t think
+	so).&nbsp; The <code>-H</code> option makes it sort in rows.&nbsp;
+	Directories are listed with slash characters after their names.&nbsp; By
+	default, directories are listed before files, and inner directory contents
+	before outer when full depth listings are done, but these can be reversed
+	with an output style option that can also adjust several other cosmetic
+	items.
+
+</li>
+<li>
+
+    Sorting is aware of international alphabets as of Dr 1.6; it will sort
+    &ldquo;M&auml;dchen&rdquo; after &ldquo;madam&rdquo; but before &ldquo;madman&rdquo;.
+
+</li>
+<li>
+
+    It handles AmigaDOS wildcard patterns, like &ldquo;<code>#?.(c|o)</code>&rdquo; to list
+	all files with names ending in &ldquo;.c&rdquo; or &ldquo;.o&rdquo;.&nbsp; Those of you who hate
+	&ldquo;<code>#?</code>&rdquo; can use &ldquo;<code>*</code>&rdquo; instead, if you activate the
+	AmigaDOS WILDSTAR flag to do this.&nbsp; The NathanHale program included
+	with Dr (it&rsquo;s tiny, pure, and PD) switches this feature on or off for all
+	regular AmigaDOS programs, as well as Dr.&nbsp; Starting with Dr 2.0, wildcards
+	can be used in all levels of a pathname, for example
+	&ldquo;<code>sys:work/#?/source/#?.c</code>&rdquo;.
+
+</li>
+<li>
+
+    It understands file links.&nbsp; When the <code>-L</code> option is used, it
+	shows what each soft link is linked to, in an extra line after the regular
+	information for that file.&nbsp; Using the <code>-X</code> option on a soft
+	link tells the pathname that it is linked to, but no other information (this
+	is due to a limitation of AmigaDOS).&nbsp; In normal output, soft links are
+	grouped with directories but do not have slashes on the ends of their names
+	as directories do.&nbsp; Hard links do not at present get any special
+	treatment, except that Dr will notice if a directory is linked &ldquo;inside
+	itself&rdquo;.&nbsp; Dr will NOT read soft links in RAM:, except for using
+	<code>-X</code> on a single link, because the Ram-Handler will sometimes
+	blow shrapnel around your system when you try that.&nbsp; (Note: if you list
+	a directory containing a hard link, you will not see any filenote on it, but
+	if you ask for a listing of just that link, perhaps by using the
+	<code>-X</code> option, you may see one.&nbsp; This is the fault of the
+	filesystem, not Dr.)
+
+</li>
+<li>
+
+    It has lots of genuinely useful options.&nbsp; There isn&rsquo;t much one could
+	ask of a directory lister that Dr can&rsquo;t somehow accomplish.
+
+</li>
+<li>
+
+    And last but certainly not least, Dr is public domain and the source
+    code is included.
+
+</li>
+</ul>
+<hr>
+<p>
+
+USAGE:  type &ldquo;<code>Dr</code>&rdquo; followed by zero or more file names, directory
+names, patterns, or options, or type &ldquo;<code>Dr ?</code>&rdquo; for a summary of
+options.&nbsp; Anything that starts with a dash character and is not enclosed in
+quotes is taken as options.&nbsp; Example:
+
+</p>
+<p class=sample>
+
+    dr -orf devs:
+
+</p>
+<p>
+
+In this command, &ldquo;devs:&rdquo; is the directory that gets listed, and the set of
+options is &ldquo;-orf&rdquo;.
+
+</p>
+<p>
+
+By default, Dr lists the names of files and subdirectories in whatever
+directories you tell it to list, alphabetically sorted in columns.&nbsp; It&rsquo;s
+usually easier to find something alphabetically by reading down columns instead
+of across rows, in my experience.&nbsp; If you disagree, use the <code>-H</code>
+option (H for &ldquo;horizontal&rdquo;).&nbsp; Directory names are listed before file names,
+with the filenames indented one space.&nbsp; (This method of visibly separating
+them replaces that stupid line of dashes that many users disliked.) Each
+directory name is followed by a slash.&nbsp; Only the name itself, not the
+slash, is orange if it has an icon.&nbsp; Things with associated *.info files
+will be marked as such even if the *.info file itself is excluded by the pattern
+you used, or by the <code>-D</code> or <code>-A</code> or <code>-B</code>
+options.&nbsp; If you list just a single file, it will check whether it has a
+*.info file and show the name in the alternate color if so, unless you use the
+<code>-I</code> (show .infos) or <code>-M</code> (monochrome) option. It does
+not check to see whether files with names ending in .info are actual valid icon
+files.&nbsp; Note that if the output is not a CON: window, it is as if
+<code>-M</code> were used; it doesn&rsquo;t show you which files had icons.
+
+</p>
+<p>
+
+New in release 1.5 is an extension of pattern syntax:  If you end the pattern
+with a double colon, it applies that pattern to files within all of the
+subdirectories it encounters, as well as the directory you specify.&nbsp; You
+can think of &ldquo;<i>pattern</i>::&rdquo; as being equivalent to &ldquo;<i>pattern</i>&rdquo; and
+&ldquo;<code>#?/</code><i>pattern</i>&rdquo; and &ldquo;<code>#?/#?/</code><i>pattern</i>&rdquo; and so
+on.&nbsp; This is different from using the <code>-R</code> option (show contents
+of subdirectories) with a pattern.&nbsp; With <code>-R</code>, it shows files in
+the top directory that fit the pattern, and looks in each subdirectory with a
+name that fits the pattern, showing all the files inside.&nbsp; With
+&ldquo;<code>::</code>&rdquo; it looks in all subdirectories and shows the items in them
+that match the pattern. The &ldquo;<code>::</code>&rdquo; can be used only at the very end
+of a path/pattern specification, not in the middle.&nbsp; That is,
+&ldquo;<code>#?/source/#?.c::</code>&rdquo; is legal but something like
+&ldquo;<code>work#?::/#?.doc </code>&rdquo; is not.
+
+</p>
+<p>
+
+<code>-R</code> will also search the contents of directories which are not
+shown, if the reason they are not shown is because of the <code>-A</code>,
+<code>-B</code>, <code>-F</code>, or <code>-P</code> options, rather
+than because of a pattern.&nbsp; Those options will limit which files are shown
+within those subdirectories.
+
+</p>
+<p>
+
+If you specify an actual directory that has a name with pattern characters in
+it, like maybe a drawer named &ldquo;<code>Doesn't work?</code>&rdquo;, Dr will list that
+directory instead of expanding the pattern.&nbsp; You can force it to expand by
+adding an extra percent sign to the pattern, so it doesn&rsquo;t match the name.&nbsp;
+Patterns at the end of a pathname may be up to 128 characters long.
+
+</p> <p>
+
+If you wish to use a single question mark as a pattern to show all files with
+one-character names, and there are no other arguments on the command line, you
+must put quotes around it or add a percent-sign to it, or Dr will think you are
+asking it for a brief summary of usage and options.&nbsp; As of Dr 1.5, the way
+to specify a quote within quotes is with <code>""</code> rather than the
+AmigaDOS standard <code>*"</code>, in order to make it easier to use the
+asterisk as a wildcard.
+
+</p>
+<p>
+
+You can give several option letters after one dash, like &ldquo;<code>Dr -chs
+foo</code>&rdquo;, or separately, like &ldquo;<code>Dr -c -h foo -s</code>&rdquo;.&nbsp; The case
+of the option letters doesn&rsquo;t matter.&nbsp; Each option affects those files and
+directories that come after it on the command line, except that any options at
+the end, after the last filename, act as if they were entered at the
+beginning.&nbsp; Example:  &ldquo;<code>dr foo -s bar</code>&rdquo; lists directory foo
+without showing sizes, and directory bar with sizes shown.&nbsp; If a directory
+name begins with a dash, put quotes around so that it isn&rsquo;t taken as
+options.&nbsp; If you give an option twice, the second one cancels the
+first.&nbsp; This means that if you make an alias like &ldquo;<code>alias list dr -lc
+[]</code>&rdquo;, saying &ldquo;<code>list -c</code>&rdquo; turns the -c option off.&nbsp; Or, you
+can show directory foo with sizes, and directory arf without sizes, with the
+command &ldquo;<code>Dr -s foo -s arf</code>&rdquo;.&nbsp; (Note: since options at the end
+act like they are at the beginning, &ldquo;<code>Dr -s directory -s</code>&rdquo; will show
+the directory without the <code>-S</code> option!)
+
+</p>
+<p>
+
+Options can also be given by setting the environment variable DR-OPTS.&nbsp; It
+can contain any option or options from the list below, including custom format
+strings.&nbsp; They are checked before looking at any of the options on the
+command line.&nbsp; Local shell variables set with &ldquo;<code>Set</code>&rdquo; take
+precedence over global ENV: variables set with &ldquo;<code>SetEnv</code>&rdquo;.&nbsp;
+Options on the command line can reverse the ones in DR-OPTS.&nbsp; The command
+line option <code>-@</code> makes it ignore the DR-OPTS variable.&nbsp; Hyphens
+before options are allowed, but not needed, in DR-OPTS.&nbsp; It can be up to
+287 characters long.&nbsp; So for example, if you want to make Dr always use the
+options &ldquo;<code>-I</code>&rdquo; and &ldquo;<code>-P^H</code>&rdquo; and &ldquo;<code>-N12</code>&rdquo; except
+when you tell it otherwise, give these commands:
+
+</p>
+<p class=sample>
+
+    setenv DR-OPTS "i p^h n12"<br/>
+    copy env:DR-OPTS envarc:
+
+</p>
+<p>
+
+The second command saves the environment variable so it will be automatically
+restored when you reboot or turn on the machine.
+
+</p>
+<hr>
+<p>
+
+The complete set of options for Dr release 2.0 is:
+
+</p>
+<table class=options>
+
+  <tr>
+  	<td class=skinny><code>-I</code></td>
+  	<td>
+        List .info files like normal files instead of using an alternate
+        color to mark the other files they are associated with.
+	</td>
+  </tr>
+
+  <tr>
+  	<td class=skinny><code>-M</code></td>
+	<td>
+        Turns off the use of color to mark files that have icons.&nbsp; Color is
+		not used anyway when output is redirected to a file.
+	</td>
+  </tr>
+
+  <tr>
+  	<td class=skinny><code>-S</code></td>
+	<td>
+        Show the size of each file in bytes, and totals.&nbsp; The number of
+		spaces allowed for each number is based on the largest value found in
+		the output, except in unsorted mode (when <code>-O</code> is used) where
+		nine characters are allowed.
+	</td>
+  </tr>
+
+  <tr>
+  	<td class=skinny><code>-C</code></td>
+	<td>
+        Sort chronologically (newest last) instead of alphabetically.
+	</td>
+  </tr>
+
+  <tr>
+  	<td class=skinny><code>-Z</code></td>
+	<td>
+        Sort by file size, from smallest to largest.&nbsp; Items of equal size,
+        such as directories, are sorted alphabetically or chronologically
+        depending on presence of <code>-C</code>.
+	</td>
+  </tr>
+
+  <tr>
+  	<td class=skinny><code>-V</code></td>
+	<td>
+        Sort in reverse (Z to A, newest to oldest, or largest to smallest).
+	</td>
+  </tr>
+
+  <tr>
+  	<td class=skinny><code>-H</code></td>
+	<td>
+        Sort into rows instead of columns, if more than one column.
+	</td>
+  </tr>
+
+  <tr>
+  	<td class=skinny><code>-L</code></td>
+	<td>
+        Show sizes, protection bits, datestamps and filenotes like the List
+		command.&nbsp; Overrides <code>-S</code>.&nbsp; Show total bytes/blocks
+		used.&nbsp; Unlike List, it puts the filename after the other
+		information instead of before. For soft links it adds an extra line
+		telling what path it is linked to.&nbsp; Output is sorted unless you
+		also use the <code>-O</code> option.
+	</td>
+  </tr>
+
+  <tr>
+  	<td class=skinny><code>-Y</code></td>
+	<td>
+        Use day names like &ldquo;<code>Today</code>&rdquo; or &ldquo;<code>Yesterday</code>&rdquo; or
+		&ldquo;<code>Monday</code>&rdquo; to show dates within the last week, the way List
+		does if you don&rsquo;t use its DATES option.&nbsp; This applies to
+		&ldquo;<code>\t</code>&rdquo; substitutions (see below) also.
+	</td>
+  </tr>
+
+  <tr>
+  	<td class=skinny><code>-D</code></td>
+	<td>
+        Do not show file names, only subdirectory names.&nbsp; Cancels
+        <code>-F</code>.
+	</td>
+  </tr>
+
+  <tr>
+  	<td class=skinny><code>-F</code></td>
+	<td>
+        Do not show subdirectory names, only file names.&nbsp; Cancels
+        <code>-D</code>.
+	</td>
+  </tr>
+
+  <tr>
+  	<td class=skinny><code>-K</code></td>
+	<td>
+        Show the disk address (header block key) of each file or directory, in
+		square brackets.&nbsp; As with <code>-S</code>, the spacing allowed for
+		the number is based on the largest value shown, except when output is
+		unsorted (<code>-O</code>).&nbsp; In that case six spaces are allowed.
+	</td>
+  </tr>
+
+  <tr>
+  	<td class=skinny><code>-R</code></td>
+	<td>
+        Recursively show contents of all subdirectories found.&nbsp; If you&rsquo;re
+		going to descend a whole lot of levels (like more than about nine) you
+		will need a bigger stack than the default 4K.&nbsp; It checks for
+		adequate stack before entering each subdirectory.&nbsp; An 8K stack
+		would let you go about 40 levels deep.
+	</td>
+  </tr>
+
+  <tr>
+  	<td class=skinny><code>-U</code></td>
+	<td>
+        Show only disk space consumed, and a count of files and directories,
+		without listing any names unless you also use <code>-O</code> or custom
+		formatting.&nbsp; As far as output goes, <code>-U</code> overrides all
+		other options except <code>-R</code>, <code>-O</code>, and custom
+		formatting, but patterns and options may affect the totals shown.
+	</td>
+  </tr>
+
+  <tr>
+  	<td class=skinny><code>-O</code></td>
+	<td>
+        Put each filename on a separate line as a complete pathname, do not
+		sort, do not hide .info files, and when <code>-R</code> is used merge
+		all the directories and subdirectories into a single list.&nbsp; If
+		<code>-L</code> is also used, size and protection and such is shown, and
+		totals are given at the end, with no subtotals for inner directories.
+		With <code>-L</code>, names are shown as relative pathnames from the
+		directory specified, including inner dir names if <code>-R</code> is
+		used, not as complete pathnames.&nbsp; Using <code>-U</code> with
+		<code>-O</code> also causes totals to be shown at the end, but leaves
+		the output in the form of one complete name per line.&nbsp; If neither
+		<code>-L</code> nor <code>-U</code> is used, there are no headers to
+		separate directories, just nothing but names.&nbsp; This can be very
+		useful as input to other programs.&nbsp; Overrides <code>-S</code>,
+		<code>-K</code>, <code>-C</code>, and lack of <code>-I</code>.&nbsp;
+		<code>-N</code> is overridden in most ways but still affects whether
+		inner directories are listed after outer ones, as opposed to being
+		listed somewhere in the middle.&nbsp; The beginning of the pathname
+		shown is the directory arg as you specified it in the command, not the
+		absolute path, unless you use <code>-T</code>.&nbsp; The pathnames
+		output have a maximum length of 300 characters. Output is continuous
+		while the disk is being scanned, instead of done afterwards.&nbsp;
+		Unsorted output can be noticeably faster, because the disk IO is
+		asynchronous.
+	</td>
+  </tr>
+
+  <tr>
+  	<td class=skinny><code>-T</code></td>
+	<td>
+        Convert the pathnames you give it to absolute form.&nbsp; For instance,
+		if you say &ldquo;<code>Dr -o env:</code>&rdquo; it will normally write lines of
+		filenames like &ldquo;<code>env:Kickstart</code>&rdquo;.&nbsp; But &ldquo;<code>Dr -ot
+		env:</code>&rdquo; will say &ldquo;<code>Ram Disk:env/Kickstart</code>&rdquo; or the like;
+		&ldquo;env:&rdquo; is converted into its true pathname.
+	</td>
+  </tr>
+
+  <tr>
+  	<td class=skinny><code>-X</code></td>
+	<td>
+        Show the specified directory&rsquo;s information as if it were listed as part
+		of its parent directory, instead of showing the files inside. Unless
+		<code>-O</code> or custom formatting is used, show its protection bits,
+		datestamp, and so on as if listed with <code>-L</code>.&nbsp; If an arg
+		is a soft link instead of a directory, show the pathname that it is
+		linked to; the datestamp and such are not shown in this case due to a
+		limitation of the Amiga filesystem.&nbsp; Ignored if <code>-R</code> or
+		a pattern at the end of the argument is used.&nbsp; Overrides
+		<code>-F</code>, <code>-D</code>, and <code>-P</code>.
+	</td>
+  </tr>
+
+  <tr>
+  	<td class=skinny><code>-A<i>#</i></code></td>
+	<td>
+        (example: <code>-A30</code>)&nbsp; Show all files dated within the last
+		<i>#</i> days.&nbsp; The cutoff point is midnight before the day
+		<i>#</i> days ago.&nbsp; Thus <code>-A0</code> shows files changed
+		today.&nbsp; <code>-A</code> not followed by a digit cancels it.
+	</td>
+  </tr>
+
+  <tr>
+  	<td class=skinny><code>-B<i>#</i></code></td>
+	<td>
+        (example: <code>-B5</code>)&nbsp; Like <code>-A</code>, but show all
+		files more than <i>#</i> days old. Combining <code>-A</code> with
+		<code>-B</code> uses a range of days, or excludes a range of days if the
+		<code>-A</code> number is smaller (more recent) than the <code>-B</code>
+		number.
+	</td>
+  </tr>
+
+  <tr>
+  	<td class=skinny><code>-N<i>#</i></code></td>
+	<td>
+        (example: <code>-N2</code>)&nbsp; Select a general style for how
+		directories and files are arranged in the output.&nbsp; The default is
+		<code>0</code>, which specifies that files should be listed immediately
+		after directories, indented one space more than directories.&nbsp;
+		<code>1</code> specifies a blank line in between, and no difference in
+		indentation.&nbsp; <code>2</code> is like <code>1</code> except with a
+		line of dashes in place of the blank line.&nbsp; <code>3</code>
+		specifies that files and directories are combined into a single sorted
+		list.&nbsp; You can add ten to any of those numbers (e.g.
+		<code>-N12</code>), and that tells it that files are to be listed before
+		directories rather than after.&nbsp; This also causes the contents of
+		inner directories to be listed after, rather than before, their parent
+		directories.&nbsp; This also causes inner directory listings to appear
+		in properly sorted order, which they cannot do when listed before their
+		parents, and might be a trifle faster.&nbsp; Other values produce a
+		nonfatal error message.
+	</td>
+  </tr>
+
+  <tr>
+  	<td class=skinny><code>-P<i>...</i></code></td>
+	<td>
+        A bit more complicated than the options above; the letter P may have
+		other letters after it, each one optionally preceded by a tilde
+		(<code>~</code>).&nbsp; The letters allowed are <code>H</code>,
+		<code>S</code>, <code>P</code>, <code>A</code>, <code>R</code>,
+		<code>W</code>, <code>E </code>, or <code>D</code> (lowercase
+		okay).&nbsp; These letters represent protection bits.&nbsp; If the tilde
+		is in front of a letter, Dr will show only files for which that
+		protection bit is not set.&nbsp; If there is no tilde it will show only
+		those for which it is set.&nbsp; For instance, to show all &ldquo;pure&rdquo; files,
+		use <code>-PP</code>.&nbsp; To show all script files which have not
+		been backed up, use <code>-PS~A</code>.&nbsp; Use <code>-P</code> with
+		a space after it to cancel earlier <code>-P</code> options, making it
+		ignore protection bits.&nbsp; For the bits <code>R</code>,
+		<code>W</code>, <code>E</code>, and <code>D</code>, &ldquo;set&rdquo; means that
+		the bit shows as present when you use List or Dr -L.&nbsp; (The physical
+		bit is actually a zero in these cases.)&nbsp; So for example
+		<code>-P~D</code> means show files protected from deletion.&nbsp; You
+		can use a caret (<code>^</code>) instead of a tilde (<code>~</code>)
+		if you want.&nbsp; Must not be followed by another option letter; that
+		is, you can&rsquo;t use <code>-PAU</code> for <code>-PA -U</code>.
+	</td>
+  </tr>
+
+  <tr>
+  	<td colspan=2 style='padding-bottom: 0;'><code>-[<i>...format&nbsp;string...</i>]</code></td>
+  </tr>
+  <tr>
+  	<td class=skinny>&nbsp;</td>
+	<td>
+        Control the format of the output.&nbsp; For each file or directory to be
+		listed, the text inside the brackets is written out followed by a
+		newline.&nbsp; Substitutions can be made in that text, by including a
+		backslash character followed by one other character to indicate what to
+		insert, optionally with digits in between.&nbsp; The digits are ignored
+		for most substitutions, but when a number (for instance) is inserted,
+		the digits specify how many text columns to use.&nbsp; For substitutions
+		that produce a decimal number (<code>\s</code> and <code>\k</code>),
+		spaces are added on the left if the number of digits to be written is
+		less than the specified width, and if the number of digits given is
+		insufficient for the number&rsquo;s digits, they&rsquo;re all written out
+		anyway.&nbsp; The complete list of substitutions is:
+
+        <table class=options>
+        	<tr>
+        		<td class=skinny><code>\n</code></td>
+        		<td>
+           			is replaced with a newline.
+           		</td>
+           	</tr>
+        	<tr>
+        		<td class=skinny><code>\e</code></td>
+        		<td>
+           			is replaced with an escape character.
+           		</td>
+           	</tr>
+        	<tr>
+        		<td class=skinny><code>\d</code></td>
+        		<td>
+					is replaced with the name of the directory being searched.
+					(If you specified a file instead of a dir, or used
+					<code>-X</code>, <code>\d</code> will give the full name,
+					and any filename pasted on after it will be invalid.)
+           		</td>
+           	</tr>
+        	<tr>
+        		<td class=skinny><code>\f</code></td>
+        		<td>
+           			is replaced with the name of the current file or directory
+               		being listed, with no path in front.
+           		</td>
+           	</tr>
+        	<tr>
+        		<td class=skinny><code>\p</code></td>
+        		<td>
+           			is replaced with the pathname of the current file or
+					directory; like <code>\d</code> followed by <code>\f</code>,
+					with a slash in between if needed.
+           		</td>
+           	</tr>
+        	<tr>
+        		<td class=skinny><code>\?</code></td>
+        		<td>
+					becomes a slash if the current file is a directory, or a
+					colon if it is a volume (with <code>-X</code> option), or
+					nothing for files. Usually used right after <code>\f</code>
+					or <code>\p</code> to show whether it is a directory.
+           		</td>
+           	</tr>
+        	<tr>
+        		<td class=skinny><code>\/</code></td>
+        		<td>
+					is a slash unless the preceding character output was a
+					slash, colon, double-quote, whitespace, or control
+					character. Possibly useful for joining filenames onto
+					directory names.
+           		</td>
+           	</tr>
+        	<tr>
+        		<td class=skinny><code>\b</code></td>
+        		<td>
+           			is replaced with the file&rsquo;s protection bits, shown as eight
+					letters or dashes; e.g. &ldquo;<code>-s-arw-d</code>&rdquo;.
+           		</td>
+           	</tr>
+        	<tr>
+        		<td class=skinny><code>\t</code></td>
+        		<td>
+					is replaced with the file&rsquo;s timestamp, in the format
+					&ldquo;DD-Mmm-YY HH:MM:SS&rdquo;.&nbsp; (No choice of date format
+					yet.)&nbsp;  If a number is given (for example
+					&ldquo;<code>\9t</code>&rdquo;), then if the number is less than 18, the
+					date is truncated on the right after that many characters,
+					and if more than 18, then extra spaces are added on the left
+					to produce the desired number of characters.
+           		</td>
+           	</tr>
+        	<tr>
+        		<td class=skinny><code>\w</code></td>
+        		<td>
+					is replaced with the day of the week that the file&rsquo;s
+					datestamp falls on.&nbsp; As with <code>\t</code>, the name
+					is padded on the left if you give a width greater than 9,
+					and truncated if you give less. This means that
+					&ldquo;<code>\3w</code>&rdquo; can be used to produce a three letter
+					abbreviation like &ldquo;Mon&rdquo; or &ldquo;Wed&rdquo;.
+           		</td>
+           	</tr>
+        	<tr>
+        		<td class=skinny><code>\s</code></td>
+        		<td>
+					is replaced with the file&rsquo;s size in bytes, or blanks for a
+					directory.&nbsp; If no width is specified, the default width
+					is 9 characters.
+           		</td>
+           	</tr>
+        	<tr>
+        		<td class=skinny><code>\k</code></td>
+        		<td>
+					is replaced with the disk address (key) of the file or
+					directory, padded to a constant width.&nbsp; If no width is
+					specified, the default width is 6 characters.
+           		</td>
+           	</tr>
+        	<tr>
+        		<td class=skinny><code>\i</code></td>
+        		<td>
+					is replaced by (<i>n</i>) spaces, where (<i>n</i>) is how
+					many levels deep in recursive descent you are &#8212; no spaces
+					when no recursion.&nbsp; If a width is included (e.g.
+					&ldquo;<code>\4i</code>&rdquo;) then the recursion depth is multiplied
+					by that number to give the number of spaces written.
+           		</td>
+           	</tr>
+        	<tr>
+        		<td class=skinny><code>\+</code></td>
+        		<td>
+           			prevents the newline at the end of each output.
+           		</td>
+           	</tr>
+        	<tr>
+        		<td class=skinny><code>\</code></td>
+        		<td>
+           			before anything else &ldquo;quotes&rdquo; it.&nbsp; Use
+           			<code>\\</code> for <code>\</code> and <code>\]</code>
+           			for <code>]</code>.
+           		</td>
+           	</tr>
+        </table>
+
+        To cancel a previous format option and use normal output from now on,
+		use <code>-[]</code>.&nbsp; Overrides <code>-S</code>, <code>-L</code>,
+		and <code>-K</code>.&nbsp; Output is sorted normally, and has the usual
+		headers to separate subdirectories and different directories given on
+		the command line, and (with <code>-N1</code> or <code>-N2</code>) the
+		usual blank line or line of dashes, unless you use <code>-O</code>
+		also.&nbsp; Note that whitespace and double-quotes inside
+		<code>-[<i>...</i>]</code> are treated as literal text, not as marking
+		separate arguments to Dr.&nbsp; The text that is output after
+		substitutions is limited to 255 characters.&nbsp; The name written by
+		<code>\p</code> or <code>\f</code> will be in the cursor color (orange
+		or whatever) if it has an icon, unless you use <code>-I</code> or
+		<code>-M</code> or <code>-O</code> or redirect the output to a file.
+	</td>
+  </tr>
+
+  <tr>
+  	<td colspan=2 style='padding-bottom: 0;'><code>-{<i>...format&nbsp;string...</i>}</code></td>
+  </tr>
+  <tr>
+  	<td class=skinny>&nbsp;</td>
+	<td>
+        Like <code>-[<i>...</i>]</code>, except it executes the result as an
+		AmigaDOS command instead of just writing it out.&nbsp; (Use
+		<code>\}</code> if you need a <code>}</code> in the command.)&nbsp; This
+		is done in addition to, not instead of, normal output.&nbsp; So you can
+		use both <code>-[<i>...</i>]</code> and <code>-{<i>...</i>}</code> at
+		once with different formats.&nbsp; The command is done first, the output
+		last.&nbsp; In fact, commands are executed during the disk scan instead
+		of saved until afterwards, so they are done in unsorted order.&nbsp; You
+		can use <code>-o[\+]</code> to suppress all output and just run
+		commands.
+	</td>
+  </tr>
+
+</table>
+<p>
+
+These next few options, which are punctuation characters instead of letters,
+differ from the above in that they take global effect if they appear anywhere
+on the command line, and do not toggle.
+
+</p>
+<table class=options>
+
+	<tr>
+		<td class=skinny><code>-@</code></td>
+		<td>
+			Causes Dr to ignore the DR-OPTS environment variable and use the
+			default &ldquo;factory&rdquo; option settings.
+		</td>
+	</tr>
+
+	<tr>
+		<td class=skinny><code>-?</code></td>
+		<td>
+			Test whether any files asked for can be found.&nbsp; Produce no output
+			of any kind, but return 5 (WARN) and error 205 (object not found) if
+			nothing is found that matches the arguments given.&nbsp; Return 0 if
+			anything is found to match any file, dir, or pattern argument.&nbsp;
+			Overrides all options controlling output.&nbsp; Also overrides
+			<code>-{}</code>, since it stops as soon as it finds even one match.
+		</td>
+	</tr>
+
+	<tr>
+		<td class=skinny><code>-!</code></td>
+		<td>
+			Turn off the cursor during output to the screen.&nbsp; Text gets written
+			somewhat faster this way.
+		</td>
+	</tr>
+
+</table>
+<p>
+
+Here is a brief list of mnemonic words that might help you remember which
+option is which:
+
+</p>
+<table class=options>
+
+	<tr>
+		<td class=skinny><code>-A</code></td>
+		<td>= After</td>
+		<td class=skinny><code>-B</code></td>
+		<td>= Before</td>
+		<td class=skinny><code>-C</code></td>
+		<td>= Chronological</td>
+		<td class=skinny><code>-D</code></td>
+		<td>= Dirs only</td>
+		<td class=skinny><code>-F</code></td>
+		<td>= Files only</td>
+	</tr>
+
+	<tr>
+		<td class=skinny><code>-H</code></td>
+		<td>= Horizontal</td>
+		<td class=skinny><code>-I</code></td>
+		<td>= include Icons</td>
+		<td class=skinny><code>-K</code></td>
+		<td>= Keys</td>
+		<td class=skinny><code>-L</code></td>
+		<td>= List Long</td>
+		<td class=skinny><code>-M</code></td>
+		<td>= Monochrome</td>
+	</tr>
+
+	<tr>
+		<td class=skinny><code>-N</code></td>
+		<td>= style Number</td>
+		<td class=skinny><code>-O</code></td>
+		<td>= name Only</td>
+		<td class=skinny><code>-P</code></td>
+		<td>= Protection</td>
+		<td class=skinny><code>-R</code></td>
+		<td>= Recursive</td>
+		<td class=skinny><code>-S</code></td>
+		<td>= Size</td>
+	</tr>
+
+	<tr>
+		<td class=skinny><code>-T</code></td>
+		<td>= True name</td>
+		<td class=skinny><code>-U</code></td>
+		<td>= Usage</td>
+		<td class=skinny><code>-V</code></td>
+		<td>= reVerse</td>
+		<td class=skinny><code>-X</code></td>
+		<td>= eXternal</td>
+		<td class=skinny><code>-Y</code></td>
+		<td>= Yesterday</td>
+	</tr>
+
+	<tr>
+		<td class=skinny><code>-Z</code></td>
+		<td>= by siZe</td>
+		<td class=skinny><code>-!</code></td>
+		<td>= zoom!</td>
+		<td class=skinny><code>-?</code></td>
+		<td>= exists?</td>
+		<td class=skinny><code>-@</code></td>
+		<td>= v@nilla</td>
+	</tr>
+
+</table>
+<hr>
+<p>
+
+If Dr lists the contents of more than one directory, each one will be
+preceded with its name, written like this:
+
+</p>
+<p class=sample>
+
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;===&nbsp;&nbsp;path/whatever/dir&nbsp;&nbsp;===
+
+</p>
+<p>
+
+unless you use <code>-O</code> (but not <code>-U</code> or custom formatting)
+in which case the different listings will all run together without
+separation.&nbsp; If you give no directory or pattern, it lists the current
+directory, of course.&nbsp; Or you can specify the current directory as empty
+quotes: <code>""</code>.
+
+</p>
+<p>
+
+If you give it a multiply assigned name, it will produce separate sections for
+each directory the name is assigned to, with banners like the one shown above
+for each one.&nbsp; It can handle up to fifty assignments on one name.&nbsp; For
+example, assume that you have FONTS: assigned to two directories named
+&ldquo;Workbench:fonts&rdquo; and &ldquo;Work:etc/MoreFonts&rdquo;.&nbsp; If you give the command &ldquo;Dr
+fonts:t#?.font&rdquo; you might get output like this:
+
+</p>
+<p class=sample>
+
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;===&nbsp;Workbench:fonts&nbsp;===<br/>
+    &nbsp;topaz.font<br/>
+<br/>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;===&nbsp;Work:etc/MoreFonts&nbsp;===<br/>
+    &nbsp;tallibm.font&nbsp;&nbsp;&nbsp;times.font
+
+</p>
+<p>
+
+Note that if you use <code>-R</code> or a &ldquo;<code>::</code>&rdquo; pattern with a
+multiply assigned name, and one of the assignments is a subdirectory of another,
+you may see some files listed twice.&nbsp; Dr does not watch out for such
+overlaps, though it will catch cases in which a link makes a directory an
+ancestor of itself.&nbsp; Also, if you name a subdirectory under the assigned
+name, which is present in more than one of the assigned directories, only the
+first one will be seen.&nbsp; (Example: if there is a
+&ldquo;<code>Workbench:fonts/courier/18</code>&rdquo; and a
+&ldquo;<code>Work:etc/MoreFonts/courier/48</code>&rdquo;, then listing
+&ldquo;<code>FONTS:courier</code>&rdquo; will only show the first.)&nbsp; When
+<code>-X</code> is used, it will tell the protection and datestamp of each
+directory the name is assigned to.
+
+</p>
+<p>
+
+The usage totals given at the end of a <code>-S</code>, <code>-L</code>, or
+<code>-U</code> output tell the number of directories listed, the number of
+files, the total number of bytes in the files, and the number of disk blocks
+they occupy.&nbsp; For each of these numbers it may give a second number in
+parentheses.&nbsp; This represents the total found in the whole directory, when
+it differs from the total of those selected for listing.&nbsp; Things excluded
+by a pattern or by <code>-A</code>, <code>-B</code>, <code>-D</code>,
+<code>-F</code>, or lack of <code>-I</code>, may contribute to the differences
+between the numbers.
+
+</p>
+<hr>
+<p>
+
+Some examples of using format strings:  to mark the files in directory foo as
+having been last updated yesterday, use
+
+</p>
+<p class=sample>
+
+    Dr -o -{setdate "\p" yesterday} foo
+
+</p>
+<p>
+
+The <code>-o</code> is not necessary but usually a good idea.&nbsp; Or you
+might want to use <code>-[\+]</code> to suppress output.
+
+</p>
+<p>
+
+To copy all files ending in &ldquo;.c&rdquo; in directory foo to directory bar with
+&ldquo;.BAK&rdquo; stuck on the end (foo/xxxxx.c becomes bar/xxxxx.c.BAK), use
+
+</p>
+<p class=sample>
+
+    Dr -o -{Copy &ldquo;\p&rdquo; to &ldquo;bar/\f.BAK&rdquo;} foo/#?.c
+
+</p>
+<p>
+
+WARNING:&nbsp; Using <code>Rename</code> in the <code>-{<i>...</i>}</code>
+command may not work.&nbsp; With at least some versions of some filesystems,
+such as RAM:, renaming a file and then looking up the &ldquo;next&rdquo; file in that
+directory after the one that just got moved, may get it very confused.&nbsp;
+Better to use <code>-[]</code> to write the <code>Rename</code> commands to a
+temporary file and then <code>Execute</code> that file.&nbsp; Similar cautions
+apply to <code>Delete</code>.
+
+</p>
+<p>
+
+Some Un#@%!x folks like to list their files by simply going &ldquo;echo *&rdquo;.&nbsp; This
+writes out the names of the files packed all onto one line.&nbsp; Well if you
+want to misuse Dr that way, you can:  (you&rsquo;ll probably want to use an alias)
+
+</p>
+<p class=sample>
+
+    Dr -f -[\f \+] foo
+
+</p>
+<p>
+
+That could be shortened to &ldquo;<code>Dr -f[\f \+] foo</code>&rdquo;... with Dr 1.5 and
+newer, you can put letter options after the same dash as <code>[]</code> and
+<code>{}</code> options, before or after the brackets.&nbsp; Dr will output a
+newline before it exits.
+
+</p>
+<p>
+
+You can execute more than one command for each file by putting \n in between the
+commands inside <code>-{ }</code>.&nbsp; Or alternatively, you can split the Dr
+command into multiple lines with a plus sign at the end of all but the last, and
+the newlines will be included in the bracketed command string.&nbsp;
+(Plus-newline outside of brackets is considered the same as a space.)&nbsp; But
+the complete text after all substitutions are made must be less than 256
+characters long or Dr cannot execute it.&nbsp; If a command comes out too long,
+Dr will write out a warning message and continue, and return 5 (&ldquo;Warn&rdquo;) when it
+exits.
+
+</p>
+<p>
+
+As an example of using more than one command separated by newlines, the
+following will type out all the files in directory foo with a header in front
+of each one:
+
+</p>
+<p class=sample>
+
+    Dr -[\+] -{echo "*N  #### FILE \p -=>" \n type "\p"} foo
+
+</p>
+<p>
+
+Or, alternatively:
+
+</p>
+<p class=sample>
+
+    Dr -[\+]{echo "*N  #### FILE \p -=>" +<br/>
+    type "\p"} foo
+
+</p>
+<p>
+
+At present, Dr quits whenever the command&rsquo;s return code is ten or more, but
+continues with nine or less.&nbsp; Dr 1.5a and earlier quit when any nonzero
+return value occured.&nbsp; A future version will have some way of setting a
+&ldquo;Failat&rdquo; level for such commands.
+
+</p>
+<p>
+
+An example of using the <code>-?</code> option to test whether any files
+matching your criteria exist ... this command tests whether either directory Foo
+or volume Bar: has any files that need backing up, with the assumption that a
+file does not need backing up if the A protection bit is set or if its name ends
+in .o or .bak, and returns 5 if none do ... you can follow this in a script with
+&ldquo;<code>If WARN</code>&rdquo; to check whether the return was 5:
+
+</p>
+<p class=sample>
+
+    Dr -?fp~a  Foo/~(#?.(o|bak))::  Bar:~(#?.(o|bak))::
+
+</p>
+<hr>
+<p>
+
+
+Some features I might add to future versions, maybe:
+
+</p>
+<blockquote>
+	<p>
+
+    The ability for the <code>\f</code> and <code>\p</code> formatting options
+	to perform string substitution on filenames, so that (for instance) FOO.TXT
+	becomes FOO.DOC.&nbsp; This would be expressed with a syntax like
+	<code>\:::f</code> or <code>\:::p</code>, for example
+	&ldquo;<code>\:.txt/:.doc:p</code>&rdquo;.&nbsp; The slash after &ldquo;.txt&rdquo; would indicate
+	that it must be found at the end of the name.&nbsp; And more ways to split
+	and combine the starting pathname, the subdirectory under that, and the
+	local name.
+
+	</p>
+	<p>
+
+    <code>-J</code>:&nbsp; go ahead and jump into soft links when using
+    <code>-R</code>.
+
+	</p>
+	<p>
+
+    <code>-G</code>:&nbsp; Show file&rsquo;s timestamp as age; days and
+    hh:mm:ss before present.
+
+	</p>
+	<p>
+
+    An option to control what format to display dates in.
+
+	</p>
+	<p>
+
+    Make <code>-A</code> and <code>-B</code> able to parse
+    date-and-time, e.g. &ldquo;<code>-A(5-Nov-93 16:00)</code>&rdquo;.
+
+	</p>
+	<p>
+
+    <code>-Q</code>:&nbsp; Super-compact columnation like
+    <b>ls 4.1ljr</b>, maybe.
+
+	</p>
+	<p>
+
+    Make <code>-X</code> and <code>-R</code> both work at once.
+
+	</p>
+	<p>
+
+    Maybe a variation of <code>-T</code> which substitutes the drive
+    name for the volume name.
+
+	</p>
+</blockquote>
+<p>
+
+Dr is in the public domain, written by Paul Kienitz.
+
+</p>
+
+</body>
+</html>
