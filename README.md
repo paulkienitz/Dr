@@ -7,3 +7,5 @@ Besides listing files, it can also execute a command per file found, or format a
 It can filter files by date, protection bits, patterns, and so on, and can apply a wildcard match recursively.
 
 The full manual is in the file Dr.doc.html, which can be browsed at this link: http://paulkienitz.net/amiga/Dr.doc.html
+
+No license, use it as you wish.
