@@ -18,3 +18,8 @@ time.*
 *.lha
 *fastscan*
 devinfo*
+GO
+
+# root-level source is for future version, not distro:
+*.c
+makefile
