@@ -1,0 +1,80 @@
+HOW FASTSCAN.LIBRARY WORKS:
+FastExamine scarfs the entire track that the directory being examined is on, and
+saves the hash table plus any blocks on that same track that point to that
+directory as parent.  Any blocks which do so and are also mentioned in the hash
+table get pushed onto a "ready" list.  Any which are not mentioned in the hash
+table go into the "maybe" group, which is stored as a binary tree.  Each file
+consumes 80 bytes of memory, or twice that if it has a filenote, plus some more
+to hold its hash table if it is a directory and you're using the deep version.
+Each file put on the ready list gets its number removed from the hash table, and
+if it has a hash chain pointer, that number gets inserted into an empty space in
+the table, and the maybe tree is checked to see if this block is present there.
+If so, that one is moved from the maybe group to the ready group, and its hash
+pointer is similarly checked.  The total count of block numbers in the table
+never increases.  Whenever you call FastExNext, it simply returns a file from
+the ready list.  If the ready list is empty, it reads the track which contains
+the block number in the hash table which is closest to the last track read.  It
+then checks this track for readies and maybes just like the first track.  This
+process continues until both the ready list and the hash table are empty, at
+which time it automatically calls FastExCleanup.  When I say it "reads" a track,
+what I actually mean is that it waits for the completion of a track read which
+it had already started, in anticipation, in a previous call to FastExNext.  As
+soon as it reads one track it figures out the next one it wants and asks the
+disk to read it ... except that it does not start an anticipatory read if the
+ready list contains any directories and the deep version is being used -- this
+is the part that is better optimized for reading inner dirs right away instead
+of afterwards.  Only when the ready list has been emptied does it use the data
+returned from such reads.
+
+It's not quite as efficient as the Fast File System when operating on a Slow
+File System volume, because a pointer found in a hash chain might cause it to
+skip back to a track it already passed over (the sorted hash lists of the FFS
+prevent this from happening), and because it can't make use of blocks buffered
+inside the file system (that is, AddBuffers doesn't help), but it will never
+read the same track twice.  Unless it runs out of memory, that is, in which case
+it will "forget" some of the maybes, which might cause it to reread a track if a
+maybe it forgot turned out to be needed after all.  On the fast file system when
+not using the deep version, no maybies would be saved at all because of the
+sorted hash chains.  For this reason there is no performance advantage (except
+in scarce cases where a large number of entries are packed onto a few tracks),
+so instead we use asynchronous ExNext packets which can take advantage of
+AddBuffers.
+
+The deep version works by simply remembering ALL files and directories it finds
+on any track it reads, in the maybe tree.  This can consume many K of memory if
+it reads lots of tracks on a hard disk.  But it saves a lot of disk IO, because
+if some directory needs to check a track that some other directory has already
+referenced, the information is waiting for it.  Directories that are found get
+their hash tables saved in an area separate from the maybe tree.  (In fact, a
+redundant copy of the information in the maybe tree is kept there, just to
+simplify coding.)  No track is read twice between the first FastExamine and the
+final FastExCleanup, given enough memory.  An inner FastExamine will take its
+information from the maybe tree instead of reading the disk, if the relevant
+track has already been read.
+
+Actually, when I say a "track", this may be just a fraction of a track with some
+hard drives.  If the size of the tracks is large (like the 98 blocks that a
+"track" on an A3000's 100Mb quantum drive supposedly has), it will divide the
+reading into smaller hunks, typically between ten and twenty blocks.
+
+Hard and soft links:  Hard links are implemented on disk as blocks that point to
+the other blocks they are linked to, with a linked list chaining them together
+in reverse order starting from the linkee.  Locking one results in a lock on the
+linkee.  ExNexting one gets the name, key, entrytype, and datestamp from the
+link, and gets the size, protection, and block count from the linkee.  As of dos
+2.04, ExNext never returns any filenote from a hard link, even if the linkee has
+one, so this version of FastExNext doesn't either.  A hard link is marked as
+being a dir or file (subtype field 4 or -4), and this must match the linkee.
+Soft links have a subtype of 3, regardless of whether it's a directory or a
+file, and contain the name of the linkee as a C string (NOT a BCPL string as the
+dos manual asserts).  At least, that's what works at present ... AmigaDOS 2.04
+does not yet support creating soft links with a shell command, but such links do
+work, at least with the regular disk filesystem.  The RAM: filesystem is not
+reliable with soft links.  These subtype values go into the EntryType and
+DirEntryType fields of the FileInfoBlock, except that a subtype of 1 (root
+directory) becomes 2.  Thus you can tell after an ExNext whether the thing is a
+link by the EntryType -- if it is 2 or -3 it is not a link.  If it is -4 or 4 it
+is a hard link, if 3 it is a soft link.  Soft links always have zero in their
+block and length fields, and no filenote.  I think.  If you attach a link to
+another link, it gets directly attached to the final linkee.
+

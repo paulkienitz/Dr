@@ -1,0 +1,59 @@
+; Source for the very small pure program R2E, which examines the value
+; returned by the previous CLI program and returns that as its IoErr code.
+;
+; optional command line argument is a positive decimal number giving a "fail
+; level" ... return codes below this number will be returned as zero ... the
+; default fail level is one.
+;
+; By Paul Kienitz, in the public domain.
+;
+; if you define the word FANCY, it does a version in which it clears IoErr if
+; the return code was zero (or below the fail level), otherwise it will set
+; IoErr only if it is zero.
+
+
+		include		"exec/types.i"
+		include		"exec/execbase.i"
+		include		"libraries/dosextens.i"
+
+start:		moveq		#0,d7			; fail level
+		moveq		#0,d1
+zoop:		  dbra		d0,yes			; arg line length
+		    bra		no
+yes:		  move.b	(a0)+,d1
+		  cmp.b		#'9',d1
+		  bgt		no
+		  sub.b		#'0',d1
+		  blt		no
+		  muls		#10,d7
+		  add.w		d1,d7
+		  bra		zoop
+no:		move.l		4,a6			; ExecBase
+		move.l		ThisTask(a6),a5		; our task ptr
+		move.l		pr_CLI(a5),d0
+		asl.l		#2,d0
+		move.l		d0,a4			; our struct CLI ptr
+		bne		okay
+		  rts					; workbench process!
+okay:		move.l		cli_ReturnCode(a4),d0
+			IFD		FANCY
+		tst.l		d7
+		bne		realfaillevel
+		  moveq		#1,d7
+realfaillevel:
+			ENDC
+		cmp.l		d7,d0			; check w/ fail level
+		bge		nomercy
+			IFD		FANCY
+		  clr.l		cli_Result2(a4)
+			ENDC
+		  moveq		#0,d0
+nomercy:
+			IFD		FANCY
+		move.l		cli_Result2(a4),d1
+		beq		setit
+		  move.l	d1,pr_Result2(a5)	; use old IoErr
+		  rts
+			ENDC
+setit:		move.l		d0,pr_Result2(a5)	; set IoErr = old RC
+		rts

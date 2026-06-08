@@ -1,7 +1,44 @@
 
 This is the revision history of Dr by Paul Kienitz:
 
-              DIFFERENCES BETWEEN RELEASE 2.0 AND RELEASE 1.6 BETA:
+
+              DIFFERENCES BETWEEN RELEASE 2.1 AND RELEASE 2.0:
+
+-J option added to make recursion follow soft links instead of skipping them.
+
+The second error message saying LISTING NOT COMPLETE: etc, no longer is given
+in cases where it immediately follows the first error message.  It was never
+intended that it should have, but somehow 2.0 ended up doing that.
+
+-G option added to display datestamps in the form of age in days, hours,
+minutes, and seconds.
+
+Multiple bit sets after -P using "|" added.
+
+Fail level number after -{...} added.
+
+Errors in the spacing of localized date/time strings in French and Portugese
+are fixed.  It now allows 19 characters instead of 18 for a date/time in
+French, and removes extra whitespace between the two in all cases.  When -Y
+is used, long day names such as the Portugese "Segunda-feira" are truncated.
+Weekday names created for \w substitution are now internationalized, and in
+that case long names are not truncated.  Error messages are still English.
+
+It is now better at avoiding making you cancel "Please insert" or "No disk
+in drive" requesters only once instead of repeatedly.
+
+If no longer returns 0 for success if all assigns of a multi-assign are
+unreadable.  It still does if at least one is readable.
+
+If you combine -L, -R, and something that prevents many files from being
+shown, it no longer puts out a bunch of extraneous lines giving totals for
+subdirectories where nothing was listed.  Also now gives a heading for each
+directory of a multiply-assigned name even when some cases show no files.
+
+********  TODO: SUPPORT filenames over 30 chars, as some filesystems now have them.
+
+
+              DIFFERENCES BETWEEN RELEASE 2.0 AND RELEASE 1.6:
 
 Dr now works under AmigaDOS 2.04 and up only.  No more ponderous 1.3 code,
 yippee!  Also, since the Directory Caching File System of DOS 3.0 renders
@@ -38,6 +75,7 @@ That beta release also had a bug in scanning multi-level patterns: the
 intermediate directories got dangling locks left on them, so they couldn't be
 deleted until after a reboot, and memory was slowly lost.  It also had a
 serious bug in the text output function that could cause memory corruption.
+
 
               DIFFERENCES BETWEEN BETA RELEASE 1.6 AND RELEASE 1.5a:
 
@@ -92,27 +130,28 @@ When writing out N filenames in more than N columns, it no longer scrunches
 the names extra close together in order to allow for one more column which
 isn't used anyway.
 
+
               DIFFERENCES BETWEEN RELEASE 1.5a AND RELEASE 1.5:
 
 This is strictly a bugfix; there are no new features.  The bugs fixed relate
 to cases in which the item given in the command line is a file and not a
-directory.  With various combinations of -O, -X, and -{}, it would do things
-like report totals when none were asked for, or execute malformed commands
-where it should have taken no action.
+directory.  With various combinations of -O, -X, and -{...}, it would do
+things like report totals when none were asked for, or execute malformed
+commands where it should have taken no action.
 
 Custom formatting would produce incorrect results for \p if -X was used or
 the arg being shown was a file.  I had to do something cheap:  in these cases
-\p simply puts out just what you typed, without even a change in
-capitalization.  Except that for root directories, it writes the volume name.
-Converting what you typed into an absolute pathname is for another release.
-\d attempts to remove the "tail" to print the parent directory name, but
-can't do so in all cases, such as if you give a path ending in slashes
-indicating parent dir(s).
+\p simply puts out just what you typed, without even fixing capitalization.
+Except that for root directories, it writes the volume name.  Converting what
+you typed into an absolute pathname is for another release.  \d attempts to
+remove the "tail" to print the parent directory name, but can't do so in all
+cases, such as if you give a path ending in slashes indicating parent dir(s).
 
 Used my "purify.a" startup module to make it reentrant, instead of the brute
 force method of keeping everything on the stack.  This made it a bit simpler
 and 400 bytes smaller.  This is NOT the defective purify.a I released before;
 it's release 2.
 
-              (Differences for versions before 1.5 are no longer
-              included in this file.)
+
+
+  DIFFERENCES FOR VERSIONS BEFORE 1.5 ARE NO LONGER INCLUDED IN THIS FILE.

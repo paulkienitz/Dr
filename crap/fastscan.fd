@@ -1,0 +1,9 @@
+##base _FastScanBase
+##bias 30
+##public
+FSRexxQuery(rexxmess)(A0)
+FastExamine(lock,fibb)(D0/A0)
+FastExNext(lock,fibb)(D0/A0)
+FastExCleanup(fibb)(A0)
+FastExGet80(fibb)(A0)
+##end

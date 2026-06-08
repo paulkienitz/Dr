@@ -1,5 +1,5 @@
 
-                                   DR 2.0
+                                   DR 2.1
 
 What we got here is Yet Another CLI Directory Listing Command, called Dr
 (pronounced "dr", one syllable) because it leaves out .info files.  (Like,
@@ -9,20 +9,28 @@ to all of the dozen or so other Amiga directory listers I've seen.  The
 features it offers are:
 
   + By default, .info files are not mentioned in the output.  Instead, it
-    shows you which files have *.info files associated with them by writing
-    their names in orange (or whatever you have set color 3 to be), unless
-    you use the -M option (for Monochrome).  Any *.info file that is not
-    associated with a regular file or directory is shown normally, e.g.
-    Disk.info.  You can see all *.info files normally with the -I option.
+    shows you which files have #?.info files associated with them by writing
+    their names in a different color (pen #3, typically the color of the
+    console window's cursor, blue in the default Workbench palette) unless
+    you use the -M option.  Any #?.info file that is not associated with a
+    regular file or directory is shown normally, e.g. Disk.info.  You can see
+    all #?.info files normally with the -I option.
 
   + It is fully reentrant and reexecutable.  The "pure" bit is set; you can
-    make it resident.  Some previous versions would not pass stringent purity
-    tests; this one does.
+    make it resident.
 
   + It is faster than other directory listers, including older versions of
     Dr.  The speed advantage is biggest when more than one directory is
-    listed.  Note that this version no longer uses the fastscan.library that
-    was included with some older releases, so you can probably delete that.
+    listed.
+
+  + It has lots of genuinely useful options.  There isn't much one could ask
+    of a directory lister that Dr can't somehow accomplish.  There are many
+    variations of output style, including whether outer directories are
+    listed before or after inner ones, whether datestamps are given as an
+    absolute date and time or as a duration telling how old the file is, and
+    whether day names are used for recent files.  The output for each file
+    can be customized with a special format, and a command can be executed
+    for each file automatically.
 
   + It arranges the output in a variable number of columns, with spacing
     based on both the length of the longest filenames and the width of the
@@ -36,15 +44,17 @@ features it offers are:
     option that can also adjust several other cosmetic items.
 
   + Sorting is aware of international alphabets as of Dr 1.6; it will sort
-    "Mädchen" after "madam" but before "madman".
+    "Mädchen" after "madam" but before "madman".  Dates and day names are
+    also internationalized.
 
-  + It handles AmigaDOS wildcard patterns, like "#?.(c|o)" to list all files
+  + It handles AmigaDOS wildcard patterns, like "#?.[co]" to list all files
     with names ending in ".c" or ".o".  Those of you who hate "#?" can use
     "*" instead, if you activate the AmigaDOS WILDSTAR flag to do this.  The
     NathanHale program included with Dr (it's tiny, pure, and PD) switches
     this feature on or off for all regular AmigaDOS programs, as well as Dr.
     Starting with Dr 2.0, wildcards can be used in all levels of a pathname,
-    for example "sys:work/#?/source/#?.c".
+    for example "sys:work/#?/source/#?.c".  It can also include or exclude
+    files from being listed according to age or protection bits.
 
   + It understands file links.  When the -L option is used, it shows what
     each soft link is linked to, in an extra line after the regular
@@ -61,8 +71,8 @@ features it offers are:
     of just that link, perhaps by using the -X option, you may see one.  This
     is the fault of the filesystem, not Dr.)
 
-  + It has lots of genuinely useful options.  There isn't much one could ask
-    of a directory lister that Dr can't somehow accomplish.
+  + Favorite option choices can be specified in an environment variable
+    called DR-OPTS.
 
   + And last but certainly not least, Dr is public domain and the source
     code is included.
@@ -81,31 +91,30 @@ By default, Dr lists the names of files and subdirectories in whatever
 directories you tell it to list, alphabetically sorted in columns.  It's
 usually easier to find something alphabetically by reading down columns
 instead of across rows, in my experience.  If you disagree, use the -H option
-(H for "horizontal").  Directory names are listed before file names, with the
-filenames indented one space.  (This method of visibly separating them
-replaces that stupid line of dashes that many users disliked.)  Each
-directory name is followed by a slash.  Only the name itself, not the slash,
-is orange if it has an icon.  Things with associated *.info files will be
-marked as such even if the *.info file itself is excluded by the pattern you
+(H for "horizontal").  By default, directory names are listed before file
+names, with the filenames indented one space.  Each directory name is
+followed by a slash.  Only the name itself, not the slash, is differently
+colored if it has an icon.  Things with associated #?.info files will be
+marked as such even if the #?.info file itself is excluded by the pattern you
 used, or by the -D or -A or -B options.  If you list just a single file, it
-will check whether it has a *.info file and show the name in the alternate
+will check whether it has a #?.info file and show the name in the alternate
 color if so, unless you use the -I (show .infos) or -M (monochrome) option.
 It does not check to see whether files with names ending in .info are actual
 valid icon files.  Note that if the output is not a CON: window, it is as if
 -M were used; it doesn't show you which files had icons.
 
-New in release 1.5 is an extension of pattern syntax:  If you end the pattern
-with a double colon, it applies that pattern to files within all of the
-subdirectories it encounters, as well as the directory you specify.  You can
-think of "pattern::" as being equivalent to "pattern" and "#?/pattern" and
-"#?/#?/pattern" and so on.  This is different from using the -R option (show
-contents of subdirectories) with a pattern.  With -R, it shows files in the
-top directory that fit the pattern, and looks in each subdirectory with a
-name that fits the pattern, showing all the files inside.  With "::" it looks
-in all subdirectories and shows the items in them that match the pattern.
-The "::" can be used only at the very end of a path/pattern specification,
-not in the middle.  That is, "#?/source/#?.c::" is legal but something like
-"work#?::/#?.doc" is not.
+In release 1.5 and newer there is an extension of normal pattern syntax:  If
+you end the pattern with a double colon, it applies that pattern to files
+within all of the subdirectories it encounters, as well as the directory you
+specify.  You can think of "pattern::" as being equivalent to "pattern" and
+"#?/pattern" and "#?/#?/pattern" and so on.  This is different from using the
+-R option (show contents of subdirectories) with a pattern.  With -R, it
+shows files in the top directory that fit the pattern, and looks in each
+subdirectory with a name that fits the pattern, showing all the files inside.
+With "::" it looks in all subdirectories and shows the items in them that
+match the pattern.  The "::" can be used only at the end of a path/pattern
+specification, not in the middle.  That is, "#?/source/#?.c::" is legal but
+something like "work#?::/#?.doc" is not.
 
 -R will also search the contents of directories which are not shown, if the
 reason they are not shown is because of the -A, -B, -F, or -P options, rather
@@ -147,21 +156,23 @@ global ENV: variables set with "SetEnv".  Options on the command line can
 reverse the ones in DR-OPTS.  The command line option -@ makes it ignore the
 DR-OPTS variable.  Hyphens before options are allowed, but not needed, in
 DR-OPTS.  It can be up to 287 characters long.  So for example, if you want
-to make Dr always use the options "-I" and "-P^H" and "-N12" except when you
-tell it otherwise, give these commands:
+to make Dr by default show .info files, but not show files with the H (for
+Hidden) protection bit set, and list directories after files with a line of
+dashes in between -- that is, to always use the options "-I" and "-P~H" and
+"-N12" except when you tell it otherwise, give these commands:
 
-    setenv DR-OPTS "i p^h n12"
+    setenv DR-OPTS "i p~h n12"
     copy env:DR-OPTS envarc:
 
 The second command saves the environment variable so it will be automatically
 restored when you reboot or turn on the machine.
 
-The complete set of options for Dr release 2.0 is:
+The complete set of options for Dr release 2.1 is:
 
-    -I  List .info files like normal files instead of using an alternate
+    -I  List .info files like normal files, instead of using an alternate
         color to mark the other files they are associated with.
 
-    -M  Turns off the use of color to mark files that have icons.  Color is
+    -M  Turns off the use of color 3 to mark files that have icons.  Color is
         not used anyway when output is redirected to a file.
 
     -S  Show the size of each file in bytes, and totals.  The number of
@@ -173,8 +184,8 @@ The complete set of options for Dr release 2.0 is:
 
     -Z  Sort by file size, from smallest to largest.  Items of equal size,
         such as directories, are sorted alphabetically or chronologically
-        depending on presence of -C.
-    
+        depending on whether -C is present.
+
     -V  Sort in reverse (Z to A, newest to oldest, or largest to smallest).
 
     -H  Sort into rows instead of columns, if more than one column.
@@ -188,6 +199,11 @@ The complete set of options for Dr release 2.0 is:
     -Y  Use day names like "Today" or "Yesterday" or "Monday" to show dates
         within the last week, the way List does if you don't use its DATES
         option.  This applies to "\t" substitutions (see below) also.
+
+    -G  Shows each file's datestamp as the number of days, hours, minutes,
+        and seconds before the present time, in this format: "23d 17:22:51".
+        If the file's date is in the future there is a minus sign before the
+        number of days.  Overrides -Y.
 
     -D  Do not show file names, only subdirectory names.  Cancels -F.
 
@@ -225,16 +241,16 @@ The complete set of options for Dr release 2.0 is:
         most ways but still affects whether inner directories are listed
         after outer ones, as opposed to being listed somewhere in the middle.
         The beginning of the pathname shown is the directory arg as you
-        specified it in the command, not the absolute path, unless you use
-        -T.  The pathnames output have a maximum length of 300 characters.
-        Output is continuous while the disk is being scanned, instead of done
-        afterwards.  Unsorted output can be noticeably faster, because the
-        disk IO is asynchronous.
+	specified it in the command, not the absolute path, unless you use
+	-T.  The pathnames output have a maximum length of 300 characters.
+	Output is continuous while the disk is being scanned, instead of done
+	afterwards.  Unsorted output can be noticeably faster, because the
+	disk IO is asynchronous.
 
     -T  Convert the pathnames you give it to absolute form.  For instance, if
         you say "Dr -o env:" it will normally write lines of filenames like
         "env:Kickstart".  But "Dr -ot env:" will say "Ram Disk:env/Kickstart"
-        or the like; "env:" is converted into its true pathname.
+        instead; "env:" is converted into its true pathname.
 
     -X  Show the specified directory's information as if it were listed as
 	part of its parent directory, instead of showing the files inside.
@@ -272,18 +288,26 @@ The complete set of options for Dr release 2.0 is:
         A bit more complicated than the options above; the letter P may have
         other letters after it, each one optionally preceded by a tilde (~).
         The letters allowed are H, S, P, A, R, W, E, or D (lowercase okay).
-        These letters represent protection bits.  If the tilde is in front of
-        a letter, Dr will show only files for which that protection bit is
-        not set.  If there is no tilde it will show only those for which it
-        is set.  For instance, to show all "pure" files, use -PP.  To show
-        all script files which have not been backed up, use -PS~A.  Use -P
-        with a space after it to cancel earlier -P options, making it ignore
-        protection bits.  For the bits R, W, E, and D, "set" means that the
-        bit shows as present when you use List or Dr -L.  (The physical bit
-        is actually a zero in these cases.)  So for example -P~D means show
-        files protected from deletion.  You can use a caret (^) instead of a
-        tilde (~) if you want.  Must not be followed by another option
-        letter; that is, you can't use -PAU for -PA -U.
+        Groups of letters can be separated with "|" characters.  These
+        letters represent protection bits.  If the tilde is in front of a
+        letter, Dr will show only files for which that protection bit is not
+        set.  If there is no tilde it will show only those for which it is
+        set.  For instance, to show all "pure" files, use -PP.  To show all
+        script files which have not been backed up, use -PS~A.  Use -P with a
+        space after it to cancel earlier -P options, making it ignore
+        protection bits.  You can specify more than one allowed combination
+        of bits by separating groups with vertical bars.  Each group of
+        letters separated by a bar represents one combination that will be
+        checked for.  For example, -PA~D|A~W|~PE means list all files that
+        are either archived and protected from deletion, or archived and
+        protected from writing, or executable and not pure.  Up to seven "|"
+        separators can be included.  For the bits R, W, E, and D, "set" means
+        that the bit shows as present when you use List or Dr -L.  (The
+        physical bit is actually off in these cases.)  So for example -P~D
+        means show files protected from deletion.  You can use a caret (^)
+        instead of a tilde (~) if you want.  Must not be followed by another
+        option letter; that is, you can't use -PAU for - PA -U, because of
+        possible ambiguity between protection bit letters and option letters.
 
     -[...format string...]
         Control the format of the output.  For each file or directory to be
@@ -299,7 +323,8 @@ The complete set of options for Dr release 2.0 is:
         number's digits, they're all written out anyway.  The complete list
         of substitutions is:
            \n is replaced with a newline.
-           \e is replaced with an escape character.
+           \e is replaced with an escape character, allowing you to create
+	       ANSI control codes.
            \d is replaced with the name of the directory being searched.
                (If you specified a file instead of a dir, or used -X, \d will
                give the full name, and any filename pasted on after it will
@@ -317,17 +342,24 @@ The complete set of options for Dr release 2.0 is:
                Possibly useful for joining filenames onto directory names.
            \b is replaced with the file's protection bits, shown as eight
                letters or dashes; e.g. "-s-arw-d".
-           \t is replaced with the file's timestamp, in the format
-               "DD-Mmm-YY HH:MM:SS".  (No choice of date format yet.)  If a
-               number is given (for example "\9t"), then if the number is
-               less than 18, the date is truncated on the right after that
-               many characters, and if more than 18, then extra spaces are
-               added on the left to produce the desired number of characters.
+           \t is replaced with the file's timestamp, in the standard AmigaDOS
+               format which is normally "DD-Mmm-YY HH:MM:SS".  No choice of
+               date format yet, but internationalization is supported.  If a
+               number is given (for example "\9t"), then the date is either
+               truncated on the right after that many characters, or padded
+               with spaces on the left to give the desired length.  The
+               default width of this field is 18 characters, unless your
+               localization preferences specify French as the system
+               language, in which case it uses 19 characters.  If -G is in
+               effect then it gives the date in age form, with a default
+               width of 18 characters.
            \w is replaced with the day of the week that the file's datestamp
                falls on.  As with \t, the name is padded on the left if you
-               give a width greater than 9, and truncated if you give less.
-               This means that "\3w" can be used to produce a three letter
-               abbreviation like "Mon" or "Wed".
+               give a width greater than the default, and truncated if you
+               give less.  This means that "\3w" can be used to produce a
+               three letter abbreviation like "Mon" or "Wed".  The default
+               width is the width of the longest day name in the selected
+	       system language; 9 characters in English.
            \s is replaced with the file's size in bytes, or blanks for a
                directory.  If no width is specified, the default width is 9
                characters.
@@ -345,12 +377,12 @@ The complete set of options for Dr release 2.0 is:
         has the usual headers to separate subdirectories and different
         directories given on the command line, and (with -N1 or -N2) the
         usual blank line or line of dashes, unless you use -O also.  Note
-        that whitespace and double-quotes inside -[...] are treated as
-        literal text, not as marking separate arguments to Dr.  The text that
-        is output after substitutions is limited to 255 characters.  The name
-        written by \p or \f will be in the cursor color (orange or whatever)
-        if it has an icon, unless you use -I or -M or -O or redirect the
-        output to a file.
+        that whitespace and double-quotes inside a -[...] option are treated
+        as literal text, not as marking separate arguments to Dr.  The text
+        that is output for any one file after substitutions is limited to 255
+        characters.  The name written by \p or \f will be in the cursor color
+        (blue or whatever) if it has an icon, unless you use -I or -M or -O
+        or redirect the output to a file.
 
     -{... format string...}
         Like -[...], except it executes the result as an AmigaDOS command
@@ -360,7 +392,12 @@ The complete set of options for Dr release 2.0 is:
         formats.  The command is done first, the output last.  In fact,
         commands are executed during the disk scan instead of saved until
         afterwards, so they are done in unsorted order.  You can use -o[\+]
-        to suppress all output and just run commands.
+        to suppress all output and just run commands.  The closing } may
+        optionally be followed immediately by a decimal number.  If given,
+        this specifies a "FailAt" level from 0 to 255.  If the command that
+        is run returns this value or higher, Dr will quit.  The default value
+        is 10.  Example: "-{More \p}5" tells Dr to quit if More returns 5 or
+        higher, which it will if it can't display the file.
 
 These next few options, which are punctuation characters instead of letters,
 differ from the above in that they take global effect if they appear anywhere
@@ -377,17 +414,19 @@ on the command line, and do not toggle.
         it stops as soon as it finds even one match.
 
     -!  Turn off the cursor during output to the screen.  Text gets written
-        somewhat faster this way.
+        somewhat faster this way.  It knows not to try this when output is
+        redirected.
 
 Here is a brief list of mnemonic words that might help you remember which
 option is which:
 
-    -A = After        -B = Before       -C = Chronological  -D = Dirs only
-    -F = Files only   -H = Horizontal   -I = include Icons  -K = Keys
-    -L = List Long    -M = Monochrome   -N = style Number   -O = name Only
-    -P = Protection   -R = Recursive    -S = Size           -T = True name
-    -U = Usage        -V = reVerse      -X = eXternal       -Y = Yesterday
-    -Z = by siZe      -! = zoom!        -? = exists?        -@ = v@nilla
+    -A = After        -B = Before       -C = Chronological -D = Dirs only
+    -F = Files only   -G = show aGe     -H = Horizontal    -I = include Icons
+    -K = Keys         -L = List Long    -M = Monochrome    -N = style Number
+    -O = One per line -P = Protection   -R = Recursive     -S = Size
+    -T = True path    -U = disk Usage   -V = reVerse       -X = eXternal look
+    -Y = Yesterday    -Z = by siZe      -! = zoom!         -? = exists?
+    -@ = v@nilla def@ults
 
 If Dr lists the contents of more than one directory, each one will be
 preceded with its name, written like this:
@@ -451,14 +490,15 @@ commands to a temporary file and then Execute that file.  Similar cautions
 apply to Delete.
 
 Some Un#@%!x folks like to list their files by simply going "echo *".  This
-writes out the names of the files packed all onto one line.  Well if you want
-to misuse Dr that way, you can:  (you'll probably want to use an alias)
+writes out the names of the files packed all onto one line.  If you want to
+misuse Dr that way, you can:  (you'll probably want to use an alias)
 
     Dr -f -[\f \+] foo
 
-That could be shortened to "Dr -f[\f \+] foo" ... with Dr 1.5 and newer,
-you can put letter options after the same dash as [] and {} options, before
-or after the brackets.  Dr will output a newline before it exits.
+That could be shortened to "Dr -f[\f \+] foo".  With Dr 1.5 and newer, you
+can put letter options after the same dash as [] and {} options, before or
+after the brackets.  Dr will output a newline before it exits, if its output
+ends in mid-line.
 
 You can execute more than one command for each file by putting \n in between
 the commands inside -{ }.  Or alternatively, you can split the Dr command
@@ -468,6 +508,12 @@ outside of brackets is considered the same as a space.)  But the complete
 text after all substitutions are made must be less than 256 characters long
 or Dr cannot execute it.  If a command comes out too long, Dr will write out
 a warning message and continue, and return 5 ("Warn") when it exits.
+
+If Dr encounters more serious errors which prevent it from listing some of
+the files that should be listed, it will return 10 and an appropriate DOS
+error code.  If the error occurs early and is then followed by valid output,
+it will give a second error message before exiting, saying "LISTING NOT
+COMPLETE" and giving the DOS fault message for the last serious error again.
 
 As an example of using more than one command separated by newlines, the
 following will type out all the files in directory foo with a header in front
@@ -480,19 +526,26 @@ Or, alternatively:
     Dr -[\+]{echo "*N  #### FILE \p -=>" +
     type "\p"} foo
 
-At present, Dr quits whenever the command's return code is ten or more, but
-continues with nine or less.  Dr 1.5a and earlier quit when any nonzero
-return value occured.  A future version will have some way of setting a
-"Failat" level for such commands.
+Note that if you give a fail level after the -{...} command, for example
+"-{Search quiet \p somestring}5" (which would cause Dr to quit as soon as an
+unsuccessful search occurred), then this number does NOT set the fail level
+for any sequence of commands inside the braces.  If a command followed by
+other commands might return an error code, you may need to cope with that by
+adding a separate FailAt command to the sequence inside the braces.  For
+example: "-{FailAt 11 \n MakeDir \d\/Backup \n Copy \p to \d\/Backup/\f}".
+The idea here is that each file listed gets copied into a subdirectory named
+Backup.  If MakeDir returns 10 because the directory Backup already exists,
+the Copy command will execute anyway.  Without the FailAt command the Copy
+command would not be executed in those cases.
 
 An example of using the -? option to test whether any files matching your
-criteria exist ... this command tests whether either directory Foo or
-volume Bar: has any files that need backing up, with the assumption that a
-file does not need backing up if the A protection bit is set or if its name
-ends in .o or .bak, and returns 5 if none do ... you can follow this in a
-script with "If WARN" to check whether the return was 5:
+criteria exist:  This command tests whether either directory Foo or volume
+Bar: have any files that need backing up, with the assumption that a file
+does not need backing up if the A protection bit is set or if its name ends
+in .o or .bak, and returns 5 if none do... you can follow this in a script
+with "If WARN" to check whether Dr returned 5:
 
-    Dr -?fp~a  Foo/~(#?.(o|bak))::  Bar:~(#?.(o|bak))::
+    Dr -?fp~a Foo/~(#?.(o|bak)):: Bar:~(#?.(o|bak))::
 
 
 Some features I might add to future versions, maybe:
@@ -506,8 +559,6 @@ Some features I might add to future versions, maybe:
 
     -J: go ahead and jump into soft links when using -R.
 
-    -G:  Show file's timestamp as age; days and hh:mm:ss before present.
-
     An option to control what format to display dates in.
 
     Make -A and -B able to parse date-and-time, e.g. "-A(5-Nov-93 16:00)".
@@ -515,14 +566,15 @@ Some features I might add to future versions, maybe:
     -Q:  Super-compact columnation like ls 4.1ljr, maybe.
 
     Make -X and -R both work at once.
-    
+
     Maybe a variation of -T which substitutes the drive name for the volume
-    name.
+    name.  But for most cases the need for this can be handled simply by
+    typing the drive name in the path you give on the command line.
 
 Dr is in the public domain, written by Paul Kienitz.  Feature suggestions and
 bug reports are appreciated.  I can be reached at:
 
-       snail: Paul Kienitz        bbses: Winners Circle     510-845-4812 
+       snail: Paul Kienitz        bbses: Winners Circle     510-845-4812
               6430 San Pablo ave.        ("Paul M Kienitz" on that one)
               Oakland, CA  94608         La Cantina (FAUG)  415-341-7566
               USA                        The Mission        415-967-2021

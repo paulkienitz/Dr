@@ -1,0 +1,311 @@
+
+                              FASTSCAN.LIBRARY       (version 101.5)
+
+The idea here is to provide a shared library which contains two functions
+FastExamine() and FastExNext() which are fast replacements for Examine and
+ExNext.  Unfortunately, the goal of full compatibility has proven impossible, at
+least for me.  But the similarity to the original Examine and ExNext makes it
+easy for a program to use either one depending on whether fastscan.library is
+installed.  Like, you attempt to open it with
+
+    FastScanBase = OpenLibrary ("fastscan.library", 0);
+
+and later, instead of ExNext(lock, fib), you use
+
+    (FastScanBase ? FastExNext(lock, fib) : ExNext(lock, fib))
+
+Using this method, your program will work the same with or without the library,
+except for how much time it takes to scan the directory.
+
+The differences from the Dos Examine and ExNext functions are:
+
+     -- VERY IMPORTANT:  You have to use an extended version of the
+        FileInfoBlock struct, with two extra longwords added onto the end.
+        Something like this will do:
+
+            struct Fib {
+                struct FileInfoBlock f;         /* no "*" */
+                long p;
+                long s;
+            };
+
+        The last extra field (called s above) MUST be initialized to either zero
+        or negative one before calling FastExamine.  Use zero if you are not
+        going to do a recursive scan of subdirectories (details below).  If you
+        don't initialize it, you'll meditate.  Use this struct as you would
+        normally use struct FileInfoBlock:  FastExamine(lock, fib).
+
+     -- VERY IMPORTANT:  There's a cleanup function you need to use when you're
+        done scanning.  Like this:  FastExCleanup(fib); where fib is the
+        extended FileInfoBlock you've been passing to FastExNext.  Otherwise
+        memory etc. won't be deallocated, and in the case of a floppy disk, the
+        motor won't get turned off until the next disk operation.
+
+     -- If you want to do a recursive scan of subdirectories, there is special
+        optimization you can use, by setting the last longword of the extended
+        FileInfoBlock (the s field of struct Fib above) to -1 instead of 0
+        before calling FastExamine for the first time.  This will be referred to
+        as using "the deep version" in this document.  This optimization works
+        not just for recursive descent, but for any succession of nonrepeating
+        multiple scans.  It causes FastExNext to remember extra information, so
+        as to reduce the amount of disk reading it has to do.
+
+     -- The set of possible error returns might be different.  Details below.
+
+     -- You can't start inner FastExNext scans using a copied fib from an outer
+        FastExNext instead of FastExamine'ing the new inner directory lock.
+        (You're not supposed to do this with Examine and ExNext but you can get
+        away with it, at least under 1.x amigados.)  If you are using the
+        optimized "deep version", you can't even start the inner FastExamine
+        with a blank struct Fib; you must copy at least the two extra fields at
+        the end (p and s) from the struct Fib you got back in the previous scan.
+        Use the most recent values you have for those two fields.
+
+     -- The files may be returned in a different order.
+
+     -- Using fastscan.library eats a lot more memory than just using the Dos
+        functions.  But if memory is low it won't hog it all; it will sacrifice
+        speed for politeness.
+
+     -- Since we end-run the dos handler and use the device driver task, any
+        data buffered in there won't help; AddBuffers goes to waste.  But
+        AddBuffers does work for the Fast File System if you're not using the
+        deep version, because end running typically offers no advantage then,
+        except with unusually large directories, especially if unfragmented.
+
+     -- Examine usually does not need to do any physical IO, but FastExamine
+        usually reads one track, and sometimes initiates the reading of another.
+        (Disk IO is asynchronous in fastscan.library).
+
+     -- FastExNext might return slightly out-of-date information if files are
+        being renamed or deleted or whatever during the scan.  Which is
+        better than the original functions will do ... if you rename files
+        while you're scanning them with regular ExNext, it can get seriously
+        confused and forget what directory it's in, at least with some
+        file systems such as the Ram-Handler.  If you're renaming or deleting
+	files as you scan, just make sure the rename/delete operation lags one
+	step behind the ExNext or FastExNext.
+
+The cleanup function FastExCleanup() takes as its one parm the pointer to the
+extended FileInfoBlock (struct Fib or whatever you want to call it) that you've
+been using for the FastExNext scan and returns nothing.  It turns off the disk
+motor if necessary, closes everything it opened, and frees all the memory it was
+using.  Unless you're using the deep version, this is done automatically when
+you get to the last entry in the directory, and is unnecessary if the original
+FastExamine hit a file instead of a directory.  If you attempt FastExNext on a
+FastExCleanup'ed fib, it will fail with IoErr returning ERROR_NO_MORE_ENTRIES,
+even if the scan wasn't finished.  If you use the deep version, call
+FastExCleanup only once when the complete scanning operation is finished.  Do
+NOT call it when an inner scan is finished but you still want to finish an outer
+scan.  Furthermore, FastExCleanup is never automatic with the deep version, you
+must call it when you quit scanning for any reason.  Even if the first
+FastExamine does not return a directory.
+
+The easiest way to handle FastExCleanup is not to test for different error
+returns, but simply to call it always whenever you know that the directory
+scan you are doing is over, even if it's not actually needed.  This is the
+most important change you will have to make to change an ExNext program into
+a FastExNext program, besides using the extended FileInfoBlock in place of
+the normal one.  It's okay to use FastExCleanup twice on one fib.
+
+So the classical way to use fastscan.library is as follows.  If normally you
+would do something like this:
+
+    struct FileInfoBlock *fibb;
+    ...
+    fibb = AllocMem(sizeof(*fibb), MEMF_PUBLIC);
+    if (!fibb) Bomb();
+    Examine(lock, fibb);
+    while (ExNext(lock, fibb) {
+        DoSomethingWith(fibb);
+        ...
+    }
+    FreeMem(fibb, sizeof(*fibb));
+
+the fastscan version, with all the necessary extras, would be:
+
+    void *FastScanBase;
+    struct Fib {
+        struct FileInfoBlock f;
+        long p, s;
+    } *fibb;
+    ...
+    FastScanBase = OpenLibrary("fastscan.library", 0);
+    fibb = AllocMem(sizeof(*fibb), MEMF_PUBLIC);
+    if (!fibb) Bomb();
+    fibb->s = 0;                        /* <= important! */
+    if (FastScanBase)
+        FastExamine(lock, fibb);
+    else
+        Examine(lock, &fibb->f);
+    while (FastScanBase ? FastExNext(lock, fibb) : ExNext(lock, &fibb->f)) {
+        DoSomethingWith(&fibb->f);
+        ...
+    }
+    if (FastScanBase) {
+        FastExCleanup(fibb);
+        CloseLibrary(FastScanBase);
+    }
+    FreeMem(fibb, sizeof(*fibb))
+
+The deep version is designed to be optimal when used in a way so that each inner
+directory is scanned as soon as it is encountered during the scan of an outer
+directory.  If you save the names of inner directories and scan them afterwards,
+it isn't quite as perfectly optimized for that case.  The next release may allow
+you to pick which style to optimize maximally for, though it won't really make
+much noticeable difference.  In either case, when FastExamining an inner
+directory, fill in the two extra fields of the struct Fib (p and s) with the
+MOST RECENT values returned in those fields by a previous FastExNext.  If you
+just initialize s to -1, the optimization won't work and it won't free all the
+memory ... and I won't promise that it doesn't mess up worse than that.
+
+There are two other functions in the library:  one is FastExGet80().  It takes
+as its arg a fib that has been used with FastExamine, or which just has the most
+recent values of p and s in it.  It returns a pointer to 80 bytes of newly
+allocated storage.  It may sometimes succeed in cases when a regular AllocMem
+would fail.  This is present because Dr had a use for it.  The other is
+FSRexxQuery, which at present does nothing and always returns 1 (the ARexx
+"program not found" error code).  Someday there might be a fastscan rexx
+function library.
+
+How to link fastscan.library into your programs:  if using assembly language,
+the offsets from the library bases are as follows:
+
+    _LVOFSRexxQuery         equ     -30
+    _LVOFastExamine         equ     -36
+    _LVOFastExNext          equ     -42
+    _LVOFastExCleanup       equ     -48
+    _LVOFastExGet80         equ     -54
+
+The include file "fastscan.i" has these definitions in it.  Lock BPTRs are
+passed in d0, all other args are passed in a0 -- unlike the dos Examine and
+ExNext functions which use d1 and d2.  If you are using some language like
+Basic, you can use the file "fastscan.fd", which contains the following:
+
+    ##base _FastScanBase
+    ##bias 30
+    ##public
+    FSRexxQuery(rexxmess)(A0)
+    FastExamine(lock,fibb)(D0/A0)
+    FastExNext(lock,fibb)(D0/A0)
+    FastExCleanup(fibb)(A0)
+    FastExGet80(fibb)(A0)
+    ##end
+
+To call these functions from C, you have two choices.  If you use a modern ANSI
+compiler such as Aztec C 5.0 or newer, SAS/Lattice C 5.0 or newer, or any
+version of DICE, the include file "fastscan.h" should work.  I think.  Or you
+can make your own declarations, something like these:
+
+    #include <libraries/dos.h>
+
+    struct Fib {
+        struct FileInfoBlock f;
+        long p, s;
+    };
+
+    long FastExamine(BPTR lok, struct Fib *fibb);
+    long FastExNext(BPTR lok, struct Fib *fibb);
+    void FastExCleanup(struct Fib *fibb);
+    void *FastExGet80(struct Fib *fibb);
+
+    void *FastScanBase;
+
+
+If you have a non-ANSI compiler you will have to remove the arguments from the
+declarations, substituting simply:
+
+    long FastExamine(), FastExNext();
+    void FastExCleanup(), FastExGet80();
+
+If your compiler does not support inline library calls ("fastscan.h" provides
+the correct pragmas for both Aztec and SAS/Lattice), you will have to use glue
+routines.  To do this, use an assembler on the file "fastscanglue.asm" to
+produce an object file which you then link with your program.  Assemble it with
+the small or large data memory model as needed by your program.  Since the
+number of different .o files that might be needed is large and I have no means
+handy of creating some of them, I am providing only the assembly source, which
+should work with most any assembler including PD ones.
+
+These functions use regular Examine and ExNext packets (asynchronously) in cases
+which they can't optimize with device-level IO.  This happens when it's not a
+true AmigaDos disk but instead something like RAM: or a network file system or
+an MS-Dos formatted disk, or when the block size is not 512 bytes (I guess I
+should fix that someday) (but I heard that the file system itself can't even
+handle such yet), also in the case of a null lock (note that if you DupLock a
+null you get null, but if you have a null CD and go Lock("", ACCESS_READ), you
+get a real non-null lock), or when there's not enough contiguous memory for a
+track buffer plus 50K of safety margin.  The performance of this thing is
+somewhat better than the Commodore file systems in all cases; in the case of a
+non-FFS disk under dos 1.3 and older, it is DRASTICALLY better.  In the most
+extreme low-memory conditions, or if it can't allocate a signal bit, it will use
+the Examine and ExNext functions synchronously.
+
+Note that, like the dos.library functions they replace, the functions in
+fastscan.library must be called by a DOS process; calling them from a simple
+Exec task will fail, possibly in a damaging way.
+
+This version can set the following IoErr codes in addition to 232 (no more
+entries):  103 if you run out of memory (or signal bits), 211 if you pass it an
+invalid lock (not guaranteed to catch all bad locks), 218 (not mounted) if you
+pop the disk out of the drive and cancel the "please replace" requester, and 225
+(not a dos disk) if there's a hardware IO error or other general trouble in
+reading the disk.  (Why is there no DOS error number for hardware errors??  With
+the old file system, the Read function returns error 286 [not documented] in
+case of a hard error ... the Write function reports success!)  Also, if
+perchance you pass it a null FileInfoBlock pointer, it indicates an error
+condition by crashing the system.  I don't know what the full set of possible
+error returns from vanilla Examine / ExNext is.
+
+When to stop scanning:  Official Amiga programs don't seem to agree whether you
+should stop scanning when ExNext returns an error other than 232 (no more
+entries).  Dir abandons the scan, List sometimes keeps trying, like when you pop
+the disk out, even cancelling the "Please replace" requester doesn't stop it, it
+keeps putting out the same output line until the disk goes back in or you use
+control-C.  With FastExNext, my goal is that you can continue past error if the
+error is 218 (not mounted) or 225 (not a dos disk = device level error).  You
+might not get a complete directory list under such conditions, and I'm not
+completely sure of its reliability in such cases, so I recommend abandoning the
+scan and calling FastExCleanup.  Particularly you should abandon the scan if the
+user has clicked Cancel on a "Please replace..." requester, which will have
+happened if you get error 218 (not mounted) and your pr_WindowPtr is not -1.
+Old ExNext sets IoErr 218 if the disk is out of the drive, but if you pop the
+disk out during a hardware read and cancel the "You MUST replace ... in unit N
+!!!" requester, it sets IoErr to (of all things) 232 "no more entries".  How
+bogus!  And also, how bogus to say "You MUST replace ... !!!" for a read-only
+operation that it actually recovers from with no problems, as far as I can tell.
+
+A note about System Requests that pop up when there's an error:  in the case of
+a hardware error, I had to mimic the official system requester by hand, and I
+have discovered that the intuition AutoRequest function is the one part of this
+that is capable of guruing when memory is low.  It's supposed to display an
+alert under such conditions, but only does so if the memory is just slightly too
+low (it needs 6k of contiguous chip ram to DisplayAlert under 1.3).  THANKS TO
+JOHN GERLACH JR for AllocMaster, which helped me to make most of this pretty
+bulletproof under low memory conditions.  There are two requesters which this
+can fire up:  "Please replace volume Xxxxxxxx in any drive" and, depending on
+which operating system you are using, "Volume Xxxxxxxxxxx has a read error on
+disk block NNNN" (in the case of AmigaDOS 2.0 and newer) or "Volume Xxxxxxxxxxx
+has a read/write error" (in the case of 1.3 and older).  This latter does not
+necessarily mean a physically defective disk or drive.  Elsewhere in Dos this
+can come up if there is simply a bogus block pointer somewhere.  This is used as
+a catchall for all device level errors other than popping out the disk.
+
+Actually, it is possible to get a "You MUST replace !!!" requester by popping
+out a disk during a FastExNext scan.  I think this happens when you interrupt a
+Dos operation (such as locking an inner directory) rather than a fastscan
+operation (reading a track).  Fastscan now knows not to put up its own requester
+once the disk is back in the drive.  After reinserting the disk, you have to
+click "Retry" by hand in this case; it does not sense disk insertion.
+
+fastscan.library is Copyright © 1992 by Paul Kienitz, and is freely
+distributable in unmodified form provided that this copyright notice is visibly
+included.  Modified versions of fastscan.library are not to be distributed
+unless I have demonstrably ceased to support it myself, or given permission.
+Feedback is appreciated.  I can be reached at:
+
+                Paul Kienitz              BBSes: try
+                6430 San Pablo ave.           Winners Circle 415-845-4812
+                Oakland, CA  94608            Triple-A 415-222-9416
+                USA                           FAUG 415-515-2479
+

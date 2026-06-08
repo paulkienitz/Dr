@@ -1,0 +1,66 @@
+
+                                  WHICHEVER
+
+This command, "Whichever", takes a list of filenames (or anything) in its
+standard input, picks one line of that input at random, and substitutes that
+line into its argument line where it finds "[]", and executes the resulting
+string as a command.  Use it whenever you want to use a program on a random
+argument selected from a list.  Make a file containing a list of the things
+you want to select randomly from and redirect its input to that file, or you
+might want to pipe the output of some directory lister program into the
+input, to operate on a random filename.
+
+For example, if your input file "namelist" contains:
+
+    foobar
+    doo
+    dah
+
+and you give the command 
+
+    Whichever < namelist Echo "The word is []"
+
+It will echo either "The word is Foobar", "The word is doo", or "The word is
+dah", at random.
+
+Limitations:  It sucks the entire input into memory, so keep it small.  It
+has a preset limit to the number of lines it can read which is currently set
+to 1000 (see the #define for LINELIMIT) and will stop reading when it reaches
+this limit.  It ignores blank lines and lines that would produce a command
+longer than 255 characters.
+
+                                  FOREVERY
+
+This works the same as Whichever except instead of picking one line at
+random, it executes a command for EVERY usable line it finds in the standard
+input, sequentially.  So it's useful for repeating one command for a whole
+set of files (or other options).  If ForEvery were used instead of Whichever
+in the example above, it would echo all three lines.  It does not stop
+executing if one of the commands returns an error, but it does listen for
+Ctrl-C and Ctrl-D break signals.  Unlike Whichever, it has no limit on the
+number of input lines.
+
+One additional use that ForEvery can have is to redirect the output of an
+AmigaDOS script file, which normal command line redirection fails to do.
+That is, if you go "MyScript > t:foo", the output of any commands executed in
+MyScript will still go to the normal standard output instead of to t:foo.
+But if you execute MyScript using this command:
+
+    ForEvery < env:Blank > t:foo MyScript []
+
+the script's output is redirected to t:foo.  This command is a bit
+complicated to execute MyScript just once, but it gets the job done.  For
+this to work, the file env:Blank should contain a single space character.  A
+command such as
+
+    SetEnv Blank " "
+
+will create such a file.  If you have a replacement command shell that
+supports "|" command piping, you don't need an env:Blank file.  Instead, you
+can do this:
+
+    Echo " " noline | ForEvery > t:foo MyScript []
+
+Of course, if you want to execute MyScript multiple times on different
+arguments, then you would use it normally: by redirecting the input to a file
+in which you have listed the different arguments to be operated on.
