@@ -1,7 +1,8 @@
 # Amiga text files use ISO latin1 encoding and Unix newlines.
-
-*.c text working-tree-encoding=ISO-8859-1 eol=lf
-*.h text working-tree-encoding=ISO-8859-1 eol=lf
-*.a text working-tree-encoding=ISO-8859-1 eol=lf
-*.doc text working-tree-encoding=ISO-8859-1 eol=lf
-*.changes text working-tree-encoding=ISO-8859-1 eol=lf
+-text
+# ...I did try to handle this within the system, but it still messes up encoding on pulls and pushes.
+# *.c text working-tree-encoding=ISO-8859-1 eol=lf
+# *.h text working-tree-encoding=ISO-8859-1 eol=lf
+# *.a text working-tree-encoding=ISO-8859-1 eol=lf
+# *.doc text working-tree-encoding=ISO-8859-1 eol=lf
+# *.changes text working-tree-encoding=ISO-8859-1 eol=lf
